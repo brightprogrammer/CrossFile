@@ -39,6 +39,8 @@
 #include "Anvie/Common.h"
 
 static inline Char* mac_style_flag_pprint (XfOtfMacStyleFlags mac_style, Char* buf, Size size);
+static inline Char* head_flags_pprint (XfOtfHeadFlags flags, Char* buf, Size size);
+static inline Char* font_direction_hint_pprint (XfOtfFontDirectionHint hint, Char* buf, Size size);
 
 /**************************************************************************************************/
 /*********************************** PUBLIC METHOD DEFINITIONS ************************************/
@@ -136,6 +138,16 @@ XfOtfHead* xf_otf_head_pprint (XfOtfHead* head) {
     Char mac_style_pprinted_buf[80] = {0};
     mac_style_flag_pprint (head->mac_style, mac_style_pprinted_buf, sizeof mac_style_pprinted_buf);
 
+    Char head_flags_pprinted_buf[300] = {0};
+    head_flags_pprint (head->flags, head_flags_pprinted_buf, sizeof head_flags_pprinted_buf);
+
+    Char font_direction_hint_pprinted_buf[21] = {0};
+    font_direction_hint_pprint (
+        head->font_direction_hint,
+        font_direction_hint_pprinted_buf,
+        sizeof font_direction_hint_pprinted_buf
+    );
+
     printf (
         "OTF Font Header Table : \n"
         "\tmajor_version = %u\n"
@@ -143,7 +155,7 @@ XfOtfHead* xf_otf_head_pprint (XfOtfHead* head) {
         "\tfont_revision = %u\n"
         "\tchecksum_adjustment = 0x%08x\n"
         "\tmagic_number = 0x%08x\n"
-        "\tflags = %08x\n"
+        "\tflags = %s\n"
         "\tunits_per_em = %u\n"
         "\tcreated = %s\n"
         "\tmodified = %s\n"
@@ -153,15 +165,15 @@ XfOtfHead* xf_otf_head_pprint (XfOtfHead* head) {
         "\ty_max = %d\n"
         "\tmac_style = %s\n"
         "\tlowest_rec_ppem = %u\n"
-        "\tfont_direction_hint = %d\n"
-        "\tindex_to_loc_format = %d\n"
-        "\tglyph_data_format = %d\n",
+        "\tfont_direction_hint = %s\n"
+        "\tindex_to_loc_format = %s\n"
+        "\tglyph_data_format = %s\n",
         head->major_version,
         head->minor_version,
         head->font_revision,
         head->checksum_adjustment,
         head->magic_number,
-        head->flags,
+        head_flags_pprinted_buf,
         head->units_per_em,
         created_time_buf,
         modified_time_buf,
@@ -171,9 +183,9 @@ XfOtfHead* xf_otf_head_pprint (XfOtfHead* head) {
         head->y_max,
         mac_style_pprinted_buf,
         head->lowest_rec_ppem,
-        head->font_direction_hint,
-        head->index_to_loc_format,
-        head->glyph_data_format
+        font_direction_hint_pprinted_buf,
+        head->index_to_loc_format ? "LONG" : "SHORT",
+        head->glyph_data_format ? "UNKNOWN" : "CURRENT"
     );
 
     return head;
@@ -199,7 +211,7 @@ static inline Char* mac_style_flag_pprint (XfOtfMacStyleFlags mac_style, Char* b
     Bool add_pipe = False;
 
 #define XF_OTF_PPRINT_FLAG(name)                                                                   \
-    if (mac_style & XF_OTF_MAC_STYLE_##name) {                                                     \
+    if (mac_style & XF_OTF_MAC_STYLE_FLAG_##name) {                                                \
         Size printed_size = snprintf (buf, size, "%s%s", add_pipe ? " | " : "", #name);            \
         if (!printed_size || size == printed_size) {                                               \
             return buf;                                                                            \
@@ -209,15 +221,92 @@ static inline Char* mac_style_flag_pprint (XfOtfMacStyleFlags mac_style, Char* b
         add_pipe  = True;                                                                          \
     }
 
-    XF_OTF_PPRINT_FLAG (BOLD)
-    XF_OTF_PPRINT_FLAG (ITALIC)
-    XF_OTF_PPRINT_FLAG (UNDERLINE)
-    XF_OTF_PPRINT_FLAG (OUTLINE)
-    XF_OTF_PPRINT_FLAG (SHADOW)
-    XF_OTF_PPRINT_FLAG (CONDENSED)
-    XF_OTF_PPRINT_FLAG (EXTENDED)
+    XF_OTF_PPRINT_FLAG (BOLD);
+    XF_OTF_PPRINT_FLAG (ITALIC);
+    XF_OTF_PPRINT_FLAG (UNDERLINE);
+    XF_OTF_PPRINT_FLAG (OUTLINE);
+    XF_OTF_PPRINT_FLAG (SHADOW);
+    XF_OTF_PPRINT_FLAG (CONDENSED);
+    XF_OTF_PPRINT_FLAG (EXTENDED);
 
 #undef XF_OTF_PPRINT_FLAG
+
+    return buf;
+}
+
+/**
+ * @b Pretty print given head flags bits to given buffer of given size.
+ *
+ * @param flags Value of flags field in font header table. 
+ * @param buf Buffer where flags will be pretty printed.
+ * @param size Size of buffer.
+ *
+ * @return @c buf on success.
+ * @return @c Null otherwise.
+ * */
+static inline Char* head_flags_pprint (XfOtfHeadFlags flags, Char* buf, Size size) {
+    RETURN_VALUE_IF (!buf || !size, Null, ERR_INVALID_ARGUMENTS);
+
+    Bool add_pipe = False;
+
+#define XF_OTF_PPRINT_FLAG(name)                                                                   \
+    if (flags & XF_OTF_HEAD_FLAG_##name) {                                                         \
+        Size printed_size = snprintf (buf, size, "%s%s", add_pipe ? " | " : "", #name);            \
+        if (!printed_size || size == printed_size) {                                               \
+            return buf;                                                                            \
+        }                                                                                          \
+        size     -= printed_size;                                                                  \
+        buf      += printed_size;                                                                  \
+        add_pipe  = True;                                                                          \
+    }
+
+
+    XF_OTF_PPRINT_FLAG (FONT_BASELINE_Y_EQ_0);
+    XF_OTF_PPRINT_FLAG (FONT_LEFT_SIDEBAR_X_EQ_0);
+    XF_OTF_PPRINT_FLAG (INSNS_DEPEND_ON_POINT_SIZE);
+    XF_OTF_PPRINT_FLAG (FORCE_PPEM_TO_INT);
+    XF_OTF_PPRINT_FLAG (INSNS_ALTER_ADVANCE_WIDTH);
+    XF_OTF_PPRINT_FLAG (LOSSLESS);
+    XF_OTF_PPRINT_FLAG (CONVERTED);
+    XF_OTF_PPRINT_FLAG (FONT_OPTIMIZED_FOR_CLEAR_TYPE);
+    XF_OTF_PPRINT_FLAG (LAST_RESORT_FONT);
+
+#undef XF_OTF_PPRINT_FLAG
+
+    return buf;
+}
+
+/**
+ * @b Pretty print given head flags bits to given buffer of given size.
+ *
+ * @param flags Value of flags field in font header table. 
+ * @param buf Buffer where flags will be pretty printed.
+ * @param size Size of buffer.
+ *
+ * @return @c buf on success.
+ * @return @c Null otherwise.
+ * */
+static inline Char* font_direction_hint_pprint (XfOtfFontDirectionHint hint, Char* buf, Size size) {
+    RETURN_VALUE_IF (!buf || !size, Null, ERR_INVALID_ARGUMENTS);
+
+#define XF_OTF_PPRINT_FLAG(name)                                                                   \
+    else if (hint == XF_OTF_FONT_DIRECTION_HINT_##name) {                                          \
+        Size printed_size = snprintf (buf, size, #name);                                           \
+        if (!printed_size || size == printed_size) {                                               \
+            return buf;                                                                            \
+        }                                                                                          \
+        size -= printed_size;                                                                      \
+        buf  += printed_size;                                                                      \
+    }
+
+    /* dummy check to activate the following macros */
+    if (False) {}
+
+    XF_OTF_PPRINT_FLAG (LEFT_TO_RIGHT)
+    XF_OTF_PPRINT_FLAG (LEFT_TO_RIGHT_STRONG)
+    XF_OTF_PPRINT_FLAG (FULLY_MIXED)
+    XF_OTF_PPRINT_FLAG (RIGHT_TO_LEFT)
+    XF_OTF_PPRINT_FLAG (RIGHT_TO_LEFT_STRONG)
 
     return buf;
 }

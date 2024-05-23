@@ -56,15 +56,31 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
         switch (record->table_tag) {
             case XF_OTF_TABLE_TAG_HEAD : {
                 GOTO_HANDLER_IF (
-                    record->length != sizeof (XfOtfHead),
+                    record->length != 54,
                     INIT_FAILED,
                     "Length of table record corresponding to font header table \"head\" is "
-                    "invalid. (Required = %u, Observed = %zu)\n",
-                    record->length,
-                    sizeof (XfOtfHead)
+                    "invalid. (Required = 54, Observed = %u)\n",
+                    record->length
                 );
                 xf_otf_head_init (&otf_file->head, otf_file->file.data + record->offset);
                 found_required_records_count++;
+                break;
+            }
+
+            case XF_OTF_TABLE_TAG_MAXP : {
+                // GOTO_HANDLER_IF (
+                //     record->length != 256 && record->length != 48,
+                //     INIT_FAILED,
+                //     "Length of table record corresponding to max profile \"maxp\" is "
+                //     "invalid. (Required = 256 or 48, Observed = %u)\n",
+                //     record->length
+                // );
+                xf_otf_max_profile_init (
+                    &otf_file->max_profile,
+                    otf_file->file.data + record->offset
+                );
+                found_required_records_count++;
+                break;
             }
 
             default :
@@ -74,7 +90,7 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
 
     /* check whether we've found all required records */
     GOTO_HANDLER_IF (
-        found_required_records_count != 1,
+        found_required_records_count != 2,
         INIT_FAILED,
         "Failed to find some of the required table records.\n"
     );
@@ -113,6 +129,7 @@ XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file) {
 
     xf_otf_table_dir_pprint (&otf_file->table_directory);
     xf_otf_head_pprint (&otf_file->head);
+    xf_otf_max_profile_pprint (&otf_file->max_profile);
 
     return otf_file;
 }

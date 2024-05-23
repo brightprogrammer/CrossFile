@@ -31,6 +31,7 @@
  * */
 
 #include <Anvie/CrossFile/Otf/Tables/IndexToLocation.h>
+#include "Anvie/Common.h"
 
 XfOtfIndexToLocation *xf_otf_index_to_location_init (XfOtfIndexToLocation *loca, Uint8 *data) {
     RETURN_VALUE_IF (!loca || !data, Null, ERR_INVALID_ARGUMENTS);
@@ -38,4 +39,8 @@ XfOtfIndexToLocation *xf_otf_index_to_location_init (XfOtfIndexToLocation *loca,
     return loca;
 }
 
-XfOtfIndexToLocation *xf_otf_index_to_location_pprint (XfOtfIndexToLocation *loca) {}
+XfOtfIndexToLocation *xf_otf_index_to_location_pprint (XfOtfIndexToLocation *loca) {
+    RETURN_VALUE_IF(!loca, Null, ERR_INVALID_ARGUMENTS);
+
+    return loca;
+}

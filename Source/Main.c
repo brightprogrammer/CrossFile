@@ -5,6 +5,7 @@
 #include <Anvie/CrossFile/Otf/Otf.h>
 
 #define TTF_FONT_PATH "../Assets/Files/FontFiles/monospace-font/MonospaceBold-zmP0.ttf"
+// #define TTF_FONT_PATH "../Assets/Files/FontFiles/monospace-font/MonospaceOblique-5meB.ttf"
 
 Int32 main() {
     XfOtfFile otf_file;

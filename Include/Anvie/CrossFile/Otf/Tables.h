@@ -34,6 +34,8 @@
 #define ANVIE_CROSSGUI_OTF_TABLES_H
 
 #include <Anvie/CrossFile/Otf/Tables/Head.h>
+#include <Anvie/CrossFile/Otf/Tables/IndexToLocation.h>
+#include <Anvie/CrossFile/Otf/Tables/MaxProfile.h>
 
 /**
  * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables
@@ -71,7 +73,7 @@ typedef enum XfOtfTableTag : Uint32 {
  *
  * REF: https://learn.microsoft.com/en-us/typography/opentype/spec/otff#table-directory
  * */
-typedef struct PACKED XfOtfTableRecord {
+typedef struct XfOtfTableRecord {
     XfOtfTableTag table_tag;
     Uint32        checksum;
     Uint32        offset; /**< @b Offset from beginning of file. */
@@ -90,7 +92,7 @@ XfOtfTableRecord* xf_otf_table_record_pprint (XfOtfTableRecord* record);
  *
  * REF: https://learn.microsoft.com/en-us/typography/opentype/spec/otff#table-directory
  * */
-typedef struct PACKED XfOtfTableDir {
+typedef struct XfOtfTableDir {
     Uint32            sfnt_version;
     Uint16            num_tables;
     Uint16            search_range;

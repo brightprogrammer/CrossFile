@@ -1,6 +1,6 @@
 /**
- * @file Otf.h
- * @date Wed, 22nd May 2024
+ * @file MaxProfile.h
+ * @date Wed, 23rd May 2024
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright 2024 Siddharth Mishra
  * @copyright Copyright 2024 Anvie Labs
@@ -30,28 +30,31 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * */
 
-#ifndef ANVIE_CROSSFILE_OTF_OTF_H
-#define ANVIE_CROSSFILE_OTF_OTF_H
+#ifndef ANVIE_CROSSFILE_OTF_TABLES_MAX_PROFILE_H
+#define ANVIE_CROSSFILE_OTF_TABLES_MAX_PROFILE_H
 
-#include <Anvie/Common.h>
 #include <Anvie/Types.h>
 
-/* crossfile */
-#include <Anvie/CrossFile/File.h>
-#include <Anvie/CrossFile/Otf/Tables.h>
+typedef struct XfOtfMaxProfile {
+    Uint16 major_version;
+    Uint16 minor_version;
+    Uint16 num_glyphs;
+    Uint16 max_points;
+    Uint16 max_contours;
+    Uint16 max_composite_points;
+    Uint16 max_composite_contours;
+    Uint16 max_zones;
+    Uint16 max_twilight_points;
+    Uint16 max_storage;
+    Uint16 max_function_defs;
+    Uint16 max_instruction_defs;
+    Uint16 max_stack_elements;
+    Uint16 max_size_of_instructions;
+    Uint16 max_component_elements;
+    Uint16 max_component_depth;
+} XfOtfMaxProfile;
 
-typedef struct XfOtfFile {
-    XfFile        file;
-    XfOtfTableDir table_directory;
+XfOtfMaxProfile* xf_otf_max_profile_init (XfOtfMaxProfile* max_prof, Uint8* data);
+XfOtfMaxProfile* xf_otf_max_profile_pprint (XfOtfMaxProfile* max_prof);
 
-    /* data from table records */
-    XfOtfHead head;
-    XfOtfMaxProfile max_profile;
-    XfOtfIndexToLocation index_to_location;
-} XfOtfFile;
-
-XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename);
-XfOtfFile* xf_otf_file_close (XfOtfFile* otf_file);
-XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file);
-
-#endif // ANVIE_CROSSFILE_OTF_OTF_H
+#endif // ANVIE_CROSSFILE_OTF_TABLES_MAX_PROFILE_H
