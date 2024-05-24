@@ -1,5 +1,5 @@
 /**
- * @file IndexToLocation.h
+ * @file Loca.h
  * @date Wed, 22nd May 2024
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright 2024 Siddharth Mishra
@@ -30,14 +30,14 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * */
 
-#ifndef ANVIE_CROSSFILE_OTF_TABLES_INDEX_TO_LOCATION_H
-#define ANVIE_CROSSFILE_OTF_TABLES_INDEX_TO_LOCATION_H
+#ifndef ANVIE_CROSSFILE_OTF_TABLES_LOCA_H
+#define ANVIE_CROSSFILE_OTF_TABLES_LOCA_H
 
 #include <Anvie/Types.h>
 
 /* fwd declarations */
-typedef struct XfOtfHead       XfOtfHead;
-typedef struct XfOtfMaxProfile XfOtfMaxProfile;
+typedef struct XfOtfHead XfOtfHead;
+typedef struct XfOtfMaxp XfOtfMaxp;
 
 /**
  * @b Glyphs index into this table to get offset to their glyph
@@ -45,8 +45,8 @@ typedef struct XfOtfMaxProfile XfOtfMaxProfile;
  *
  * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/loca
  * */
-typedef struct XfOtfIndexToLocation {
-    Uint16 num_glyphs; /**< @b Value copied from @c XfOtfMaxProfile struct. */
+typedef struct XfOtfLoca {
+    Uint16 num_glyphs; /**< @b Value copied from @c XfOtfMaxp struct. */
 
     /**
      * @b @c True if "loca" stores long version offsets. @c False otherwise. 
@@ -57,17 +57,12 @@ typedef struct XfOtfIndexToLocation {
         Uint16 *short_version; /**< @b Offsets divided by two is stored. */
         Uint32 *long_version;  /**< @b Actual offset is stored. */
     } offsets;
-} XfOtfIndexToLocation;
+} XfOtfLoca;
 
-#define XF_OTF_INDEX_TO_LOCATION_DATA_SIZE sizeof (Uint16)
+#define XF_OTF_LOCA_DATA_SIZE sizeof (Uint16)
 
-XfOtfIndexToLocation *xf_otf_index_to_location_init (
-    XfOtfIndexToLocation *loca,
-    XfOtfHead            *head,
-    XfOtfMaxProfile      *maxp,
-    Uint8                *data,
-    Size                  size
-);
-XfOtfIndexToLocation *xf_otf_index_to_location_pprint (XfOtfIndexToLocation *loca);
+XfOtfLoca *
+    xf_otf_loca_init (XfOtfLoca *loca, XfOtfHead *head, XfOtfMaxp *maxp, Uint8 *data, Size size);
+XfOtfLoca *xf_otf_loca_pprint (XfOtfLoca *loca);
 
-#endif // ANVIE_CROSSFILE_OTF_TABLES_INDEX_TO_LOCATION_H
+#endif // ANVIE_CROSSFILE_OTF_TABLES_LOCA_H

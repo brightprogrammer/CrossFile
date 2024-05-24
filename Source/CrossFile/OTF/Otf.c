@@ -35,7 +35,7 @@
 /* libc */
 #include <memory.h>
 
-#include "Anvie/CrossFile/Otf/Tables/CharToGlyphIndexMap.h"
+#include "Anvie/CrossFile/Otf/Tables/Maxp.h"
 
 XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
     RETURN_VALUE_IF (!otf_file || !filename, Null, ERR_INVALID_ARGUMENTS);
@@ -58,8 +58,8 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
         switch (record->table_tag) {
             case XF_OTF_TABLE_TAG_CMAP : {
                 RETURN_VALUE_IF (
-                    !xf_otf_char_to_glyph_index_map_init (
-                        &otf_file->char_to_glyph_index_map,
+                    !xf_otf_cmap_init (
+                        &otf_file->cmap,
                         otf_file->file.data + record->offset,
                         record->length
                     ),
@@ -86,8 +86,8 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
 
             case XF_OTF_TABLE_TAG_MAXP : {
                 RETURN_VALUE_IF (
-                    !xf_otf_max_profile_init (
-                        &otf_file->max_profile,
+                    !xf_otf_maxp_init (
+                        &otf_file->maxp,
                         otf_file->file.data + record->offset,
                         record->length
                     ),
@@ -120,7 +120,7 @@ INIT_FAILED:
 XfOtfFile* xf_otf_file_close (XfOtfFile* otf_file) {
     RETURN_VALUE_IF (!otf_file, Null, ERR_INVALID_ARGUMENTS);
 
-    xf_otf_char_to_glyph_index_map_deinit (&otf_file->char_to_glyph_index_map);
+    xf_otf_cmap_deinit (&otf_file->cmap);
 
     if (otf_file->table_directory.table_records) {
         FREE (otf_file->table_directory.table_records);
@@ -146,8 +146,8 @@ XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file) {
 
     xf_otf_table_dir_pprint (&otf_file->table_directory);
     xf_otf_head_pprint (&otf_file->head);
-    xf_otf_max_profile_pprint (&otf_file->max_profile);
-    xf_otf_char_to_glyph_index_map_pprint (&otf_file->char_to_glyph_index_map);
+    xf_otf_maxp_pprint (&otf_file->maxp);
+    xf_otf_cmap_pprint (&otf_file->cmap);
 
     return otf_file;
 }

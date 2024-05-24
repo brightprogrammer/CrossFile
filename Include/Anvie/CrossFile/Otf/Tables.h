@@ -34,9 +34,9 @@
 #define ANVIE_CROSSGUI_OTF_TABLES_H
 
 #include <Anvie/CrossFile/Otf/Tables/Head.h>
-#include <Anvie/CrossFile/Otf/Tables/IndexToLocation.h>
-#include <Anvie/CrossFile/Otf/Tables/MaxProfile.h>
-#include <Anvie/CrossFile/Otf/Tables/CharToGlyphIndexMap.h>
+#include <Anvie/CrossFile/Otf/Tables/Loca.h>
+#include <Anvie/CrossFile/Otf/Tables/Maxp.h>
+#include <Anvie/CrossFile/Otf/Tables/Cmap.h>
 
 /**
  * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables

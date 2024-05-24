@@ -1,5 +1,5 @@
 /**
- * @file MaxProfile.h
+ * @file Maxp.h
  * @date Wed, 23rd May 2024
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright 2024 Siddharth Mishra
@@ -30,8 +30,8 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * */
 
-#ifndef ANVIE_CROSSFILE_OTF_TABLES_MAX_PROFILE_H
-#define ANVIE_CROSSFILE_OTF_TABLES_MAX_PROFILE_H
+#ifndef ANVIE_CROSSFILE_OTF_TABLES_MAXP_H
+#define ANVIE_CROSSFILE_OTF_TABLES_MAXP_H
 
 #include <Anvie/Types.h>
 
@@ -40,7 +40,7 @@
  * use Version 0.5 of this table, specifying only the numGlyphs field. Fonts with TrueType outlines
  * must use Version 1.0 of this table, where all data is required.
  * */
-typedef struct XfOtfMaxProfile {
+typedef struct XfOtfMaxp {
     Uint32 version;
     Uint16 num_glyphs;
     Uint16 max_points;
@@ -56,12 +56,12 @@ typedef struct XfOtfMaxProfile {
     Uint16 max_size_of_instructions;
     Uint16 max_component_elements;
     Uint16 max_component_depth;
-} XfOtfMaxProfile;
+} XfOtfMaxp;
 
-#define XF_OTF_MAX_PROFILE_VERSION_10_DATA_SIZE (sizeof (Uint32) + sizeof (Uint16) * 14)
-#define XF_OTF_MAX_PROFILE_VERSION_05_DATA_SIZE (sizeof (Uint32) + sizeof (Uint16))
+#define XF_OTF_MAXP_VERSION_10_DATA_SIZE (sizeof (Uint32) + sizeof (Uint16) * 14)
+#define XF_OTF_MAXP_VERSION_05_DATA_SIZE (sizeof (Uint32) + sizeof (Uint16))
 
-XfOtfMaxProfile* xf_otf_max_profile_init (XfOtfMaxProfile* max_prof, Uint8* data, Size size);
-XfOtfMaxProfile* xf_otf_max_profile_pprint (XfOtfMaxProfile* max_prof);
+XfOtfMaxp* xf_otf_maxp_init (XfOtfMaxp* max_prof, Uint8* data, Size size);
+XfOtfMaxp* xf_otf_maxp_pprint (XfOtfMaxp* max_prof);
 
-#endif // ANVIE_CROSSFILE_OTF_TABLES_MAX_PROFILE_H
+#endif // ANVIE_CROSSFILE_OTF_TABLES_MAXP_H

@@ -1,5 +1,5 @@
 /**
- * @file IndexToLocation.c
+ * @file Loca.c
  * @date Wed, 22nd May 2024
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright 2024 Siddharth Mishra
@@ -32,19 +32,14 @@
 
 #include <Anvie/Common.h>
 #include <Anvie/CrossFile/Otf/Tables/Head.h>
-#include <Anvie/CrossFile/Otf/Tables/IndexToLocation.h>
-#include <Anvie/CrossFile/Otf/Tables/MaxProfile.h>
+#include <Anvie/CrossFile/Otf/Tables/Loca.h>
+#include <Anvie/CrossFile/Otf/Tables/Maxp.h>
 
-XfOtfIndexToLocation *xf_otf_index_to_location_init (
-    XfOtfIndexToLocation *loca,
-    XfOtfHead            *head,
-    XfOtfMaxProfile      *maxp,
-    Uint8                *data,
-    Size                  size
-) {
+XfOtfLoca *
+    xf_otf_loca_init (XfOtfLoca *loca, XfOtfHead *head, XfOtfMaxp *maxp, Uint8 *data, Size size) {
     RETURN_VALUE_IF (!loca || !head || !maxp || !data, Null, ERR_INVALID_ARGUMENTS);
     RETURN_VALUE_IF (
-        size < XF_OTF_INDEX_TO_LOCATION_DATA_SIZE,
+        size < XF_OTF_LOCA_DATA_SIZE,
         Null,
         "Data buffer size not sufficient to initialize index to location table \"loca\".\n"
     );
@@ -52,7 +47,7 @@ XfOtfIndexToLocation *xf_otf_index_to_location_init (
     return loca;
 }
 
-XfOtfIndexToLocation *xf_otf_index_to_location_pprint (XfOtfIndexToLocation *loca) {
+XfOtfLoca *xf_otf_loca_pprint (XfOtfLoca *loca) {
     RETURN_VALUE_IF (!loca, Null, ERR_INVALID_ARGUMENTS);
 
     return loca;

@@ -33,7 +33,8 @@
 #ifndef ANVIE_CROSSFILE_ENDIANNESS_HELPERS_H
 #define ANVIE_CROSSFILE_ENDIANNESS_HELPERS_H
 
-#define GET_AND_ADV_U1(d) (Uint8*)d)[0] ;                                                          \
+#define GET_AND_ADV_U1(d)                                                                          \
+    ((Uint8 *)d)[0];                                                                               \
     d++;
 #define GET_AND_ADV_U2(d)                                                                          \
     BE2LE_U2 (((Uint16 *)d)[0]);                                                                   \

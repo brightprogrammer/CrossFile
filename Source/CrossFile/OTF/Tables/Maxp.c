@@ -1,5 +1,5 @@
 /**
- * @file MaxProfile.c
+ * @file Maxp.c
  * @date Wed, 23rd May 2024
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright 2024 Siddharth Mishra
@@ -34,19 +34,19 @@
 
 /* crossfile */
 #include <Anvie/CrossFile/EndiannessHelpers.h>
-#include <Anvie/CrossFile/Otf/Tables/MaxProfile.h>
+#include <Anvie/CrossFile/Otf/Tables/Maxp.h>
 
 #define MAXP_VERSION_10 0x00010000
 #define MAXP_VERSION_05 0x00005000
 
-XfOtfMaxProfile* xf_otf_max_profile_init (XfOtfMaxProfile* max_prof, Uint8* data, Size size) {
+XfOtfMaxp* xf_otf_maxp_init (XfOtfMaxp* max_prof, Uint8* data, Size size) {
     RETURN_VALUE_IF (!max_prof || !data, Null, ERR_INVALID_ARGUMENTS);
 
     Uint32 version = GET_AND_ADV_U4 (data);
 
     if (version == MAXP_VERSION_10) {
         RETURN_VALUE_IF (
-            size < XF_OTF_MAX_PROFILE_VERSION_10_DATA_SIZE,
+            size < XF_OTF_MAXP_VERSION_10_DATA_SIZE,
             Null,
             "Data buffer size not sufficient to initialize max profile table \"maxp\".\n"
         );
@@ -68,7 +68,7 @@ XfOtfMaxProfile* xf_otf_max_profile_init (XfOtfMaxProfile* max_prof, Uint8* data
         max_prof->max_component_depth      = GET_AND_ADV_U2 (data);
     } else if (version == MAXP_VERSION_05) {
         RETURN_VALUE_IF (
-            size < XF_OTF_MAX_PROFILE_VERSION_05_DATA_SIZE,
+            size < XF_OTF_MAXP_VERSION_05_DATA_SIZE,
             Null,
             "Data buffer size not sufficient to initialize max profile table \"maxp\".\n"
         );
@@ -83,7 +83,7 @@ XfOtfMaxProfile* xf_otf_max_profile_init (XfOtfMaxProfile* max_prof, Uint8* data
     return max_prof;
 }
 
-XfOtfMaxProfile* xf_otf_max_profile_pprint (XfOtfMaxProfile* max_prof) {
+XfOtfMaxp* xf_otf_maxp_pprint (XfOtfMaxp* max_prof) {
     RETURN_VALUE_IF (!max_prof, Null, ERR_INVALID_ARGUMENTS);
 
     if (max_prof->version == MAXP_VERSION_10) {
