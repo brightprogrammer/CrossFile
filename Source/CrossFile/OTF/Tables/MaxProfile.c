@@ -36,14 +36,23 @@
 #include <Anvie/CrossFile/EndiannessHelpers.h>
 #include <Anvie/CrossFile/Otf/Tables/MaxProfile.h>
 
-XfOtfMaxProfile* xf_otf_max_profile_init (XfOtfMaxProfile* max_prof, Uint8* data) {
+#define MAXP_VERSION_10 0x00010000
+#define MAXP_VERSION_05 0x00005000
+
+XfOtfMaxProfile* xf_otf_max_profile_init (XfOtfMaxProfile* max_prof, Uint8* data, Size size) {
     RETURN_VALUE_IF (!max_prof || !data, Null, ERR_INVALID_ARGUMENTS);
 
-    max_prof->major_version = GET_AND_ADV_U2 (data);
-    max_prof->minor_version = GET_AND_ADV_U2 (data);
-    max_prof->num_glyphs    = GET_AND_ADV_U2 (data);
+    Uint32 version = GET_AND_ADV_U4 (data);
 
-    if (max_prof->major_version == 1 && max_prof->minor_version == 0) {
+    if (version == MAXP_VERSION_10) {
+        RETURN_VALUE_IF (
+            size < XF_OTF_MAX_PROFILE_VERSION_10_DATA_SIZE,
+            Null,
+            "Data buffer size not sufficient to initialize max profile table \"maxp\".\n"
+        );
+
+        max_prof->version                  = version;
+        max_prof->num_glyphs               = GET_AND_ADV_U2 (data);
         max_prof->max_points               = GET_AND_ADV_U2 (data);
         max_prof->max_contours             = GET_AND_ADV_U2 (data);
         max_prof->max_composite_points     = GET_AND_ADV_U2 (data);
@@ -57,7 +66,16 @@ XfOtfMaxProfile* xf_otf_max_profile_init (XfOtfMaxProfile* max_prof, Uint8* data
         max_prof->max_size_of_instructions = GET_AND_ADV_U2 (data);
         max_prof->max_component_elements   = GET_AND_ADV_U2 (data);
         max_prof->max_component_depth      = GET_AND_ADV_U2 (data);
-    } else if (max_prof->major_version != 0 || max_prof->minor_version != 5) {
+    } else if (version == MAXP_VERSION_05) {
+        RETURN_VALUE_IF (
+            size < XF_OTF_MAX_PROFILE_VERSION_05_DATA_SIZE,
+            Null,
+            "Data buffer size not sufficient to initialize max profile table \"maxp\".\n"
+        );
+
+        max_prof->version    = version;
+        max_prof->num_glyphs = GET_AND_ADV_U2 (data);
+    } else {
         PRINT_ERR ("Invalid version in Max Profile \"maxp\" table\n");
         return Null;
     }
@@ -68,11 +86,10 @@ XfOtfMaxProfile* xf_otf_max_profile_init (XfOtfMaxProfile* max_prof, Uint8* data
 XfOtfMaxProfile* xf_otf_max_profile_pprint (XfOtfMaxProfile* max_prof) {
     RETURN_VALUE_IF (!max_prof, Null, ERR_INVALID_ARGUMENTS);
 
-    if (max_prof->major_version == 1 && max_prof->minor_version == 0) {
+    if (max_prof->version == MAXP_VERSION_10) {
         printf (
             "OTF Maximum Profile :\n"
-            "\tmajor_version = %u\n"
-            "\tminor_version = %u\n"
+            "\tversion = %08x (%s)\n"
             "\tnum_glyphs = %u\n"
             "\tmax_points = %u\n"
             "\tmax_contours = %u\n"
@@ -87,8 +104,8 @@ XfOtfMaxProfile* xf_otf_max_profile_pprint (XfOtfMaxProfile* max_prof) {
             "\tmax_size_of_instructions = %u\n"
             "\tmax_component_elements = %u\n"
             "\tmax_component_depth = %u\n",
-            max_prof->major_version,
-            max_prof->minor_version,
+            max_prof->version,
+            "Version 1.0 (TTF)",
             max_prof->num_glyphs,
             max_prof->max_points,
             max_prof->max_contours,
@@ -104,14 +121,13 @@ XfOtfMaxProfile* xf_otf_max_profile_pprint (XfOtfMaxProfile* max_prof) {
             max_prof->max_component_elements,
             max_prof->max_component_depth
         );
-    } else if (max_prof->major_version == 0 && max_prof->minor_version == 5) {
+    } else if (max_prof->version == MAXP_VERSION_05) {
         printf (
             "OTF Maximum Profile :\n"
-            "\tmajor_version = %u\n"
-            "\tminor_version = %u\n"
+            "\tversion = %08x (%s)\n"
             "\tnum_glyphs = %u\n",
-            max_prof->major_version,
-            max_prof->minor_version,
+            max_prof->version,
+            "Version 0.5 (CFF/CFF2)",
             max_prof->num_glyphs
         );
     } else {

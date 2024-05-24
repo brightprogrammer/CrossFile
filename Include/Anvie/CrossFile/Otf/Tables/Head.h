@@ -33,7 +33,6 @@
 #ifndef ANVIE_CROSSFILE_OTF_TABLES_HEAD_H
 #define ANVIE_CROSSFILE_OTF_TABLES_HEAD_H
 
-#include <Anvie/Common.h>
 #include <Anvie/Types.h>
 
 #define OTF_MAGIC_NUMBER ((Uint32)0x5F0F3CF5)
@@ -75,7 +74,11 @@ typedef enum XfOtfFontDirectionHint : Int16 {
 
 /**
  * @b Font Header Table
- *
+ * 
+ * This table gives global information about the font. The bounding box values should be
+ * computed using only glyphs that have contours. Glyphs with no contours should be ignored
+ * for the purposes of these calculations.
+ * 
  * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/head
  * */
 typedef struct XfOtfHead {
@@ -99,7 +102,12 @@ typedef struct XfOtfHead {
     Int16 glyph_data_format;   /**< @b 0 for current format. */
 } XfOtfHead;
 
-XfOtfHead* xf_otf_head_init (XfOtfHead* head, Uint8* data);
+#define XF_OTF_HEAD_DATA_SIZE                                                                    \
+    (sizeof (Uint16) * 2 + sizeof (Uint32) * 3 + sizeof (XfOtfHeadFlags) + sizeof (Uint16) +       \
+     sizeof (Uint64) * 2 + sizeof (Int16) * 4 + sizeof (XfOtfMacStyleFlags) + sizeof (Uint16) +    \
+     sizeof (XfOtfFontDirectionHint) + sizeof (Int16) * 2)
+
+XfOtfHead* xf_otf_head_init (XfOtfHead* head, Uint8* data, Size size);
 XfOtfHead* xf_otf_head_pprint (XfOtfHead* head);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_HEAD_H

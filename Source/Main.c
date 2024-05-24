@@ -6,6 +6,7 @@
 
 #define TTF_FONT_PATH "../Assets/Files/FontFiles/monospace-font/MonospaceBold-zmP0.ttf"
 // #define TTF_FONT_PATH "../Assets/Files/FontFiles/monospace-font/MonospaceOblique-5meB.ttf"
+// #define TTF_FONT_PATH "/home/misra/Documents/Olivia-Regular.otf"
 
 Int32 main() {
     XfOtfFile otf_file;

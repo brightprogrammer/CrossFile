@@ -33,8 +33,11 @@
 #ifndef ANVIE_CROSSFILE_OTF_TABLES_INDEX_TO_LOCATION_H
 #define ANVIE_CROSSFILE_OTF_TABLES_INDEX_TO_LOCATION_H
 
-#include <Anvie/Common.h>
 #include <Anvie/Types.h>
+
+/* fwd declarations */
+typedef struct XfOtfHead       XfOtfHead;
+typedef struct XfOtfMaxProfile XfOtfMaxProfile;
 
 /**
  * @b Glyphs index into this table to get offset to their glyph
@@ -43,7 +46,7 @@
  * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/loca
  * */
 typedef struct XfOtfIndexToLocation {
-    Uint64 num_glyphs; /**< @b Value copied from @c XfOtfMaxProfile struct. */
+    Uint16 num_glyphs; /**< @b Value copied from @c XfOtfMaxProfile struct. */
 
     /**
      * @b @c True if "loca" stores long version offsets. @c False otherwise. 
@@ -56,7 +59,15 @@ typedef struct XfOtfIndexToLocation {
     } offsets;
 } XfOtfIndexToLocation;
 
-XfOtfIndexToLocation *xf_otf_index_to_location_init (XfOtfIndexToLocation *loca, Uint8 *data);
+#define XF_OTF_INDEX_TO_LOCATION_DATA_SIZE sizeof (Uint16)
+
+XfOtfIndexToLocation *xf_otf_index_to_location_init (
+    XfOtfIndexToLocation *loca,
+    XfOtfHead            *head,
+    XfOtfMaxProfile      *maxp,
+    Uint8                *data,
+    Size                  size
+);
 XfOtfIndexToLocation *xf_otf_index_to_location_pprint (XfOtfIndexToLocation *loca);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_INDEX_TO_LOCATION_H

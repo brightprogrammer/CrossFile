@@ -56,8 +56,13 @@ static inline Char* font_direction_hint_pprint (XfOtfFontDirectionHint hint, Cha
  * @return @c head on success.
  * @return @c Null otherwise.
  * */
-XfOtfHead* xf_otf_head_init (XfOtfHead* head, Uint8* data) {
+XfOtfHead* xf_otf_head_init (XfOtfHead* head, Uint8* data, Size size) {
     RETURN_VALUE_IF (!head || !data, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (
+        size < XF_OTF_HEAD_DATA_SIZE,
+        Null,
+        "Data buffer size not sufficient to initialize head table \"head\".\n"
+    );
 
     /* load and check validity of version numbers */
     head->major_version = GET_AND_ADV_U2 (data);

@@ -35,6 +35,8 @@
 /* libc */
 #include <memory.h>
 
+#include "Anvie/CrossFile/Otf/Tables/CharToGlyphIndexMap.h"
+
 XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
     RETURN_VALUE_IF (!otf_file || !filename, Null, ERR_INVALID_ARGUMENTS);
 
@@ -42,7 +44,7 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
     RETURN_VALUE_IF (!xf_file_open (&otf_file->file, filename), Null, ERR_FILE_OPEN_FAILED);
 
     /* load table directory */
-    xf_otf_table_dir_init (&otf_file->table_directory, otf_file->file.data);
+    xf_otf_table_dir_init (&otf_file->table_directory, otf_file->file.data, otf_file->file.size);
 
     /* if this value is 8 in the end then we've possibly found all the required records
      * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables */
@@ -54,30 +56,43 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
         XfOtfTableRecord* record = otf_file->table_directory.table_records + s;
 
         switch (record->table_tag) {
-            case XF_OTF_TABLE_TAG_HEAD : {
-                GOTO_HANDLER_IF (
-                    record->length != 54,
-                    INIT_FAILED,
-                    "Length of table record corresponding to font header table \"head\" is "
-                    "invalid. (Required = 54, Observed = %u)\n",
-                    record->length
+            case XF_OTF_TABLE_TAG_CMAP : {
+                RETURN_VALUE_IF (
+                    !xf_otf_char_to_glyph_index_map_init (
+                        &otf_file->char_to_glyph_index_map,
+                        otf_file->file.data + record->offset,
+                        record->length
+                    ),
+                    Null,
+                    "Failed to initialize char to glyph index map \"cmap\".\n"
                 );
-                xf_otf_head_init (&otf_file->head, otf_file->file.data + record->offset);
+                found_required_records_count++;
+                break;
+            }
+
+            case XF_OTF_TABLE_TAG_HEAD : {
+                RETURN_VALUE_IF (
+                    !xf_otf_head_init (
+                        &otf_file->head,
+                        otf_file->file.data + record->offset,
+                        record->length
+                    ),
+                    Null,
+                    "Failed to initialize font header table \"head\".\n"
+                );
                 found_required_records_count++;
                 break;
             }
 
             case XF_OTF_TABLE_TAG_MAXP : {
-                // GOTO_HANDLER_IF (
-                //     record->length != 256 && record->length != 48,
-                //     INIT_FAILED,
-                //     "Length of table record corresponding to max profile \"maxp\" is "
-                //     "invalid. (Required = 256 or 48, Observed = %u)\n",
-                //     record->length
-                // );
-                xf_otf_max_profile_init (
-                    &otf_file->max_profile,
-                    otf_file->file.data + record->offset
+                RETURN_VALUE_IF (
+                    !xf_otf_max_profile_init (
+                        &otf_file->max_profile,
+                        otf_file->file.data + record->offset,
+                        record->length
+                    ),
+                    Null,
+                    "Failed to initialize max profile table \"maxp\".\n"
                 );
                 found_required_records_count++;
                 break;
@@ -90,7 +105,7 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
 
     /* check whether we've found all required records */
     GOTO_HANDLER_IF (
-        found_required_records_count != 2,
+        found_required_records_count != 3,
         INIT_FAILED,
         "Failed to find some of the required table records.\n"
     );
@@ -104,6 +119,8 @@ INIT_FAILED:
 
 XfOtfFile* xf_otf_file_close (XfOtfFile* otf_file) {
     RETURN_VALUE_IF (!otf_file, Null, ERR_INVALID_ARGUMENTS);
+
+    xf_otf_char_to_glyph_index_map_deinit (&otf_file->char_to_glyph_index_map);
 
     if (otf_file->table_directory.table_records) {
         FREE (otf_file->table_directory.table_records);
@@ -130,6 +147,7 @@ XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file) {
     xf_otf_table_dir_pprint (&otf_file->table_directory);
     xf_otf_head_pprint (&otf_file->head);
     xf_otf_max_profile_pprint (&otf_file->max_profile);
+    xf_otf_char_to_glyph_index_map_pprint (&otf_file->char_to_glyph_index_map);
 
     return otf_file;
 }

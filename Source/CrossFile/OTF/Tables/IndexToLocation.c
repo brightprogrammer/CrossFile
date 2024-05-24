@@ -30,17 +30,30 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * */
 
+#include <Anvie/Common.h>
+#include <Anvie/CrossFile/Otf/Tables/Head.h>
 #include <Anvie/CrossFile/Otf/Tables/IndexToLocation.h>
-#include "Anvie/Common.h"
+#include <Anvie/CrossFile/Otf/Tables/MaxProfile.h>
 
-XfOtfIndexToLocation *xf_otf_index_to_location_init (XfOtfIndexToLocation *loca, Uint8 *data) {
-    RETURN_VALUE_IF (!loca || !data, Null, ERR_INVALID_ARGUMENTS);
+XfOtfIndexToLocation *xf_otf_index_to_location_init (
+    XfOtfIndexToLocation *loca,
+    XfOtfHead            *head,
+    XfOtfMaxProfile      *maxp,
+    Uint8                *data,
+    Size                  size
+) {
+    RETURN_VALUE_IF (!loca || !head || !maxp || !data, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (
+        size < XF_OTF_INDEX_TO_LOCATION_DATA_SIZE,
+        Null,
+        "Data buffer size not sufficient to initialize index to location table \"loca\".\n"
+    );
 
     return loca;
 }
 
 XfOtfIndexToLocation *xf_otf_index_to_location_pprint (XfOtfIndexToLocation *loca) {
-    RETURN_VALUE_IF(!loca, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!loca, Null, ERR_INVALID_ARGUMENTS);
 
     return loca;
 }

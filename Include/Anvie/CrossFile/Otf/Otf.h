@@ -48,6 +48,7 @@ typedef struct XfOtfFile {
     XfOtfHead head;
     XfOtfMaxProfile max_profile;
     XfOtfIndexToLocation index_to_location;
+    XfOtfCharToGlyphIndexMap char_to_glyph_index_map;
 } XfOtfFile;
 
 XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename);

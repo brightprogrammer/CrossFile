@@ -36,6 +36,7 @@
 #include <Anvie/CrossFile/Otf/Tables/Head.h>
 #include <Anvie/CrossFile/Otf/Tables/IndexToLocation.h>
 #include <Anvie/CrossFile/Otf/Tables/MaxProfile.h>
+#include <Anvie/CrossFile/Otf/Tables/CharToGlyphIndexMap.h>
 
 /**
  * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables
@@ -80,7 +81,9 @@ typedef struct XfOtfTableRecord {
     Uint32        length; /**< @b Length of table. */
 } XfOtfTableRecord;
 
-XfOtfTableRecord* xf_otf_table_record_init (XfOtfTableRecord* record, Uint8* data);
+#define XF_OTF_TABLE_RECORD_DATA_SIZE (sizeof (XfOtfTableTag) + sizeof (Uint32) * 3)
+
+XfOtfTableRecord* xf_otf_table_record_init (XfOtfTableRecord* record, Uint8* data, Size size);
 XfOtfTableRecord* xf_otf_table_record_pprint (XfOtfTableRecord* record);
 
 /**
@@ -101,7 +104,9 @@ typedef struct XfOtfTableDir {
     XfOtfTableRecord* table_records;
 } XfOtfTableDir;
 
-XfOtfTableDir*    xf_otf_table_dir_init (XfOtfTableDir* dir, Uint8* data);
+#define XF_OTF_TABLE_DIR_DATA_SIZE (sizeof (Uint16) * 4 + sizeof (Uint32))
+
+XfOtfTableDir*    xf_otf_table_dir_init (XfOtfTableDir* dir, Uint8* data, Size size);
 XfOtfTableDir*    xf_otf_table_dir_deinit (XfOtfTableDir* dir);
 XfOtfTableRecord* xf_otf_table_dir_find_record (XfOtfTableDir* dir, XfOtfTableTag table_tag);
 XfOtfTableDir*    xf_otf_table_dir_pprint (XfOtfTableDir* dir);

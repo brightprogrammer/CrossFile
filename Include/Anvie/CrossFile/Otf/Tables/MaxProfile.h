@@ -35,9 +35,13 @@
 
 #include <Anvie/Types.h>
 
+/**
+ * This table establishes the memory requirements for this font. Fonts with CFF or CFF2 outlines must
+ * use Version 0.5 of this table, specifying only the numGlyphs field. Fonts with TrueType outlines
+ * must use Version 1.0 of this table, where all data is required.
+ * */
 typedef struct XfOtfMaxProfile {
-    Uint16 major_version;
-    Uint16 minor_version;
+    Uint32 version;
     Uint16 num_glyphs;
     Uint16 max_points;
     Uint16 max_contours;
@@ -54,7 +58,10 @@ typedef struct XfOtfMaxProfile {
     Uint16 max_component_depth;
 } XfOtfMaxProfile;
 
-XfOtfMaxProfile* xf_otf_max_profile_init (XfOtfMaxProfile* max_prof, Uint8* data);
+#define XF_OTF_MAX_PROFILE_VERSION_10_DATA_SIZE (sizeof (Uint32) + sizeof (Uint16) * 14)
+#define XF_OTF_MAX_PROFILE_VERSION_05_DATA_SIZE (sizeof (Uint32) + sizeof (Uint16))
+
+XfOtfMaxProfile* xf_otf_max_profile_init (XfOtfMaxProfile* max_prof, Uint8* data, Size size);
 XfOtfMaxProfile* xf_otf_max_profile_pprint (XfOtfMaxProfile* max_prof);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_MAX_PROFILE_H

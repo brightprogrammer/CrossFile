@@ -52,8 +52,13 @@
  * @return @c record on success.
  * @return @c Null otherwise.
  * */
-XfOtfTableRecord* xf_otf_table_record_init (XfOtfTableRecord* record, Uint8* data) {
+XfOtfTableRecord* xf_otf_table_record_init (XfOtfTableRecord* record, Uint8* data, Size size) {
     RETURN_VALUE_IF (!record || !data, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (
+        size < 4 * sizeof (Uint32),
+        Null,
+        "Data buffer size not sufficient to initialize table record.\n"
+    );
 
     record->table_tag  = ((Uint32*)data)[0];
     data              += 4;
@@ -105,12 +110,18 @@ XfOtfTableRecord* xf_otf_table_record_pprint (XfOtfTableRecord* record) {
  * @return @c dir on success.
  * @return @c Null otherwise.
  * */
-XfOtfTableDir* xf_otf_table_dir_init (XfOtfTableDir* dir, Uint8* data) {
+XfOtfTableDir* xf_otf_table_dir_init (XfOtfTableDir* dir, Uint8* data, Size size) {
     RETURN_VALUE_IF (!dir || !data, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (
+        size < XF_OTF_TABLE_DIR_DATA_SIZE,
+        Null,
+        "Data buffer size not sufficient to initialize font header table.\n"
+    );
 
     dir->sfnt_version = GET_AND_ADV_U4 (data);
     RETURN_VALUE_IF (
-        (dir->sfnt_version != 0x00010000 && dir->sfnt_version != 0x4F54544F),
+        (dir->sfnt_version != 0x00010000 /* version 1.0 */ &&
+         dir->sfnt_version != 0x4F54544F /* version OTTO */),
         Null,
         "Invalid sfnt_version in top level table directory.\n"
     );
@@ -125,13 +136,16 @@ XfOtfTableDir* xf_otf_table_dir_init (XfOtfTableDir* dir, Uint8* data) {
     dir->table_records = ALLOCATE (XfOtfTableRecord, dir->num_tables);
     RETURN_VALUE_IF (!dir->table_records, Null, ERR_OUT_OF_MEMORY);
 
+    size -= XF_OTF_TABLE_DIR_DATA_SIZE;
+
     for (Size table_idx = 0; table_idx < dir->num_tables; table_idx++) {
-        if (!xf_otf_table_record_init (dir->table_records + table_idx, data)) {
+        if (!xf_otf_table_record_init (dir->table_records + table_idx, data, size)) {
             PRINT_ERR ("Failed to read a table record\n");
             xf_otf_table_dir_deinit (dir);
             return Null;
         }
-        data += sizeof (XfOtfTableRecord);
+        data += XF_OTF_TABLE_RECORD_DATA_SIZE;
+        size -= XF_OTF_TABLE_RECORD_DATA_SIZE;
     }
 
     return dir;
