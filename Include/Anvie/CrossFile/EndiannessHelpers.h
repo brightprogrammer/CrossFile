@@ -58,4 +58,30 @@
     BE2LE_I8 (((Int64 *)d)[0]);                                                                    \
     d += 8;
 
+#define GET_ARR_AND_ADV_U2(arr, range_begin, range_end)                                                  \
+    for (Size s = range_begin; s < range_end; s++) {                                               \
+        arr[s] = GET_AND_ADV_U2 (data);                                                            \
+    }
+#define GET_ARR_AND_ADV_U4(arr, range_begin, range_end)                                                  \
+    for (Size s = range_begin; s < range_end; s++) {                                               \
+        arr[s] = GET_AND_ADV_U4 (data);                                                            \
+    }
+#define GET_ARR_AND_ADV_U8(arr, range_begin, range_end)                                                  \
+    for (Size s = range_begin; s < range_end; s++) {                                               \
+        arr[s] = GET_AND_ADV_U8 (data);                                                            \
+    }
+
+#define GET_ARR_AND_ADV_I2(arr, range_begin, range_end)                                                  \
+    for (Size s = range_begin; s < range_end; s++) {                                               \
+        arr[s] = GET_AND_ADV_I2 (data);                                                            \
+    }
+#define GET_ARR_AND_ADV_I4(arr, range_begin, range_end)                                                  \
+    for (Size s = range_begin; s < range_end; s++) {                                               \
+        arr[s] = GET_AND_ADV_I4 (data);                                                            \
+    }
+#define GET_ARR_AND_ADV_I8(arr, range_begin, range_end)                                                  \
+    for (Size s = range_begin; s < range_end; s++) {                                               \
+        arr[s] = GET_AND_ADV_I8 (data);                                                            \
+    }
+
 #endif // ANVIE_CROSSFILE_ENDIANNESS_HELPERS_H

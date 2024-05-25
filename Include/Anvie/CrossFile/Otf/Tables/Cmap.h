@@ -35,165 +35,6 @@
 
 #include <Anvie/Types.h>
 
-/**
- * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/cmap#platform-ids
- * */
-typedef enum XfOtfPlatformID : Uint16 {
-    XF_OTF_PLATFORM_ID_MIN = 0,
-
-    XF_OTF_PLATFORM_ID_VARIOUS = 0,
-    XF_OTF_PLATFORM_ID_MAC     = 1,
-    XF_OTF_PLATFORM_ID_ISO     = 2,
-    XF_OTF_PLATFORM_ID_WIN     = 3,
-    XF_OTF_PLATFORM_ID_CUSTOM  = 4,
-
-    XF_OTF_PLATFORM_ID_MAX = 4
-} XfOtfPlatformID;
-
-/**
- * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/cmap#unicode-platform-platform-id--0 
- * 
- * - Use of encoding IDs 0, 1 or 2 is deprecated.
- * - Encoding ID 3 should be used in conjunction with 'cmap' subtable formats 4 or 6.
- * - Encoding ID 4 should be used in conjunction with subtable formats 10 or 12.
- * 
- * - Unicode Variation Sequences supported by the font should be specified in the 'cmap'
- *   table using a format 14 subtable.
- *
- * - A format 14 subtable must only be used under platform ID 0 and encoding ID 5; 
- * - Encoding ID 5 should only be used with a format 14 subtable.
- * 
- * - Encoding ID 6 should only be used in conjunction with 'cmap' subtable format 13;
- * - Subtable format 13 should only be used under platform ID 0 and encoding ID 6.
- * */
-typedef enum XfOtfVariousEncodingId : Uint16 {
-    XF_OTF_VARIOUS_ENCODING_ID_MIN = 0,
-
-    XF_OTF_VARIOUS_ENCODING_ID_UNICODE_10                 = 0,
-    XF_OTF_VARIOUS_ENCODING_ID_UNICODE_11                 = 1,
-    XF_OTF_VARIOUS_ENCODING_ID_ISO_IEC_10646              = 2,
-    XF_OTF_VARIOUS_ENCODING_ID_UNICODE_20_BMP_ONLY        = 3,
-    XF_OTF_VARIOUS_ENCODING_ID_UNICODE_20_FULL_REPERTOIRE = 4,
-    XF_OTF_VARIOUS_ENCODING_ID_UNICODE_VARIATION_SEQ      = 5,
-    XF_OTF_VARIOUS_ENCODING_ID_UNICODE_FULL_REPERTOIRE    = 6,
-
-    XF_OTF_VARIOUS_ENCODING_ID_MAX = 6
-} XfOtfVariousEncodingId;
-
-/**
- * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/name#macintosh-encoding-ids-script-manager-codes
- * */
-typedef enum XfOtfMacEncodingId : Uint16 {
-    XF_OTF_MAC_ENCODING_ID_MIN = 0,
-
-    XF_OTF_MAC_ENCODING_ID_ROMAN               = 0,
-    XF_OTF_MAC_ENCODING_ID_JAPANESE            = 1,
-    XF_OTF_MAC_ENCODING_ID_CHINESE_TRADITIONAL = 2,
-    XF_OTF_MAC_ENCODING_ID_KOREAN              = 3,
-    XF_OTF_MAC_ENCODING_ID_ARABIC              = 4,
-    XF_OTF_MAC_ENCODING_ID_HEBREW              = 5,
-    XF_OTF_MAC_ENCODING_ID_GREEK               = 6,
-    XF_OTF_MAC_ENCODING_ID_RUSSIAN             = 7,
-    XF_OTF_MAC_ENCODING_ID_RSYMBOL             = 8,
-    XF_OTF_MAC_ENCODING_ID_DEVANAGARI          = 9,
-    XF_OTF_MAC_ENCODING_ID_GURMUKHI            = 10,
-    XF_OTF_MAC_ENCODING_ID_GUJARATI            = 11,
-    XF_OTF_MAC_ENCODING_ID_ODIA                = 12,
-    XF_OTF_MAC_ENCODING_ID_BANGLA              = 13,
-    XF_OTF_MAC_ENCODING_ID_TAMIL               = 14,
-    XF_OTF_MAC_ENCODING_ID_TELUGU              = 15,
-    XF_OTF_MAC_ENCODING_ID_KANNADA             = 16,
-    XF_OTF_MAC_ENCODING_ID_MALAYALAM           = 17,
-    XF_OTF_MAC_ENCODING_ID_SINHALESE           = 18,
-    XF_OTF_MAC_ENCODING_ID_BURMESE             = 19,
-    XF_OTF_MAC_ENCODING_ID_KHMER               = 20,
-    XF_OTF_MAC_ENCODING_ID_THAI                = 21,
-    XF_OTF_MAC_ENCODING_ID_LAOTIAN             = 22,
-    XF_OTF_MAC_ENCODING_ID_GEORGIAN            = 23,
-    XF_OTF_MAC_ENCODING_ID_ARMENIAN            = 24,
-    XF_OTF_MAC_ENCODING_ID_CHINESE_SIMPLIFIED  = 25,
-    XF_OTF_MAC_ENCODING_ID_TIBETAN             = 26,
-    XF_OTF_MAC_ENCODING_ID_MONGOLIAN           = 27,
-    XF_OTF_MAC_ENCODING_ID_GEEZ                = 28,
-    XF_OTF_MAC_ENCODING_ID_SLAVIC              = 29,
-    XF_OTF_MAC_ENCODING_ID_VIETNAMESE          = 30,
-    XF_OTF_MAC_ENCODING_ID_SINDHI              = 31,
-    XF_OTF_MAC_ENCODING_ID_UNINTERPRETED       = 32,
-
-    XF_OTF_MAC_ENCODING_ID_MAX = 32
-} XfOtfMacEncodingId;
-
-/**
- * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/cmap#iso-platform-platform-id--2
- * */
-typedef enum XfOtfIsoEncodingId : Uint16 {
-    XF_OTF_ISO_ENCODING_ID_MIN = 0,
-
-    XF_OTF_ISO_ENCODING_ID_7_BIT_ASCII = 0,
-    XF_OTF_ISO_ENCODING_ID_ISO_10646   = 1,
-    XF_OTF_ISO_ENCODING_ID_ISO_8859_1  = 2,
-
-    XF_OTF_ISO_ENCODING_ID_MAX = 2,
-} XfOtfIsoEncodingId;
-
-/**
- * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/cmap#windows-platform-platform-id--3
- * */
-typedef enum XfOtfWinEncodingId : Uint16 {
-    XF_OTF_WIN_ENCODING_ID_MIN = 0,
-
-    XF_OTF_WIN_ENCODING_ID_SYMBOL                  = 0,
-    XF_OTF_WIN_ENCODING_ID_UNICODE_BMP             = 1,
-    XF_OTF_WIN_ENCODING_ID_SHIFTJIS                = 2,
-    XF_OTF_WIN_ENCODING_ID_PRC                     = 3,
-    XF_OTF_WIN_ENCODING_ID_BIG5                    = 4,
-    XF_OTF_WIN_ENCODING_ID_WANSUNG                 = 5,
-    XF_OTF_WIN_ENCODING_ID_JOHAB                   = 6,
-    XF_OTF_WIN_ENCODING_ID_RESERVED_7              = 7,
-    XF_OTF_WIN_ENCODING_ID_RESERVED_8              = 8,
-    XF_OTF_WIN_ENCODING_ID_RESERVED_9              = 9,
-    XF_OTF_WIN_ENCODING_ID_UNICODE_FULL_REPERTOIRE = 10,
-
-    XF_OTF_WIN_ENCODING_ID_MAX = 10,
-} XfOtfWinEncodingId;
-
-#define XF_OTF_CUSTOM_ENCODING_ID_MIN 0
-#define XF_OTF_CUSTOM_ENCODING_ID_MAX 255
-
-/**
- * The array of encoding records specifies particular encodings and the offset to the
- * subtable for each encoding.
- *
- * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/cmap#encoding-records-and-encodings
- * */
-typedef struct XfOtfEncodingRecord {
-    XfOtfPlatformID platform_id;
-    union {
-        XfOtfVariousEncodingId various;
-        XfOtfMacEncodingId     mac;
-        XfOtfIsoEncodingId     iso;
-        XfOtfWinEncodingId     win;
-        Uint16 custom; /**< @b For legacy support, must be ignored in newer fonts. */
-    } encoding_id;
-    Uint32 subtable_offset;
-} XfOtfEncodingRecord;
-
-/**
- * @b This table defines the mapping of character codes to the glyph index values used in the font.
- * It may contain more than one subtable, in order to support more than one character encoding scheme.
- *
- * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/cmap#cmap-header
- * */
-typedef struct XfOtfCmap {
-    Uint16               version;
-    Uint16               num_tables;
-    XfOtfEncodingRecord* encoding_records;
-} XfOtfCmap;
-
-XfOtfCmap* xf_otf_cmap_init (XfOtfCmap* cmap, Uint8* data, Size size);
-XfOtfCmap* xf_otf_cmap_deinit (XfOtfCmap* cmap);
-XfOtfCmap* xf_otf_cmap_pprint (XfOtfCmap* cmap);
-
 typedef struct XfOtfCmapSubHeader {
     Uint16 first_code;
     Uint16 entry_count;
@@ -266,10 +107,9 @@ typedef struct XfOtfCmapSubTableFormat2 {
 } XfOtfCmapSubTableFormat2;
 
 typedef struct XfOtfCmapSubTableFormat4 {
-    Uint16  format;
     Uint16  length;
     Uint16  language;
-    Uint16  seg_count_x2;
+    Uint16  seg_count;
     Uint16  search_range;
     Uint16  entry_selector;
     Uint16  range_shift;
@@ -282,24 +122,24 @@ typedef struct XfOtfCmapSubTableFormat4 {
 } XfOtfCmapSubTableFormat4;
 
 typedef struct XfOtfCmapSubTableFormat6 {
-    Uint16 length;
-    Uint16 language;
-    Uint16 first_code;
-    Uint16 entry_count;
-    Uint16 glyph_id_array;
+    Uint16  length;
+    Uint16  language;
+    Uint16  first_code;
+    Uint16  entry_count;
+    Uint16* glyph_id_array;
 } XfOtfCmapSubTableFormat6;
 
 typedef struct XfOtfCmapSubTableFormat8 {
     Uint16             reserved;
     Uint32             length;
     Uint32             language;
-    Uint8*             is32;
+    Uint8              is32[8192];
     Uint32             num_groups;
     XfOtfCmapMapGroup* groups;
 } XfOtfCmapSubTableFormat8;
 
 typedef struct XfOtfCmapSubTableFormat10 {
-    Uint16  reseved;
+    Uint16  reserved;
     Uint32  length;
     Uint32  language;
     Uint32  start_char_code;
@@ -312,13 +152,13 @@ typedef struct XfOtfCmapSubTableFormat12 {
     Uint32             length;
     Uint32             language;
     Uint32             num_groups;
-    XfOtfCmapMapGroup* grpups;
+    XfOtfCmapMapGroup* groups;
 } XfOtfCmapSubTableFormat12, XfOtfCmapSubTableFormat13;
 
 typedef struct XfOtfCmapSubTableFormat14 {
     Uint32                length;
-    Uint32                num_var_selector_records;
-    XfOtfCmapVarSelector* var_selector;
+    Uint32                num_var_selectors;
+    XfOtfCmapVarSelector* var_selectors;
 } XfOtfCmapSubTableFormat14;
 
 /**
@@ -329,16 +169,176 @@ typedef struct XfOtfCmapSubTableFormat14 {
 typedef struct XfOtfCmapSubTable {
     Uint16 format;
     union {
-        XfOtfCmapSubTableFormat0  format0;
-        XfOtfCmapSubTableFormat2  format2;
-        XfOtfCmapSubTableFormat4  format4;
-        XfOtfCmapSubTableFormat6  format6;
-        XfOtfCmapSubTableFormat8  format8;
-        XfOtfCmapSubTableFormat10 format10;
-        XfOtfCmapSubTableFormat12 format12;
-        XfOtfCmapSubTableFormat13 format13;
-        XfOtfCmapSubTableFormat14 format14;
+        XfOtfCmapSubTableFormat0*  format0;
+        XfOtfCmapSubTableFormat2*  format2;
+        XfOtfCmapSubTableFormat4*  format4;
+        XfOtfCmapSubTableFormat6*  format6;
+        XfOtfCmapSubTableFormat8*  format8;
+        XfOtfCmapSubTableFormat10* format10;
+        XfOtfCmapSubTableFormat12* format12;
+        XfOtfCmapSubTableFormat13* format13;
+        XfOtfCmapSubTableFormat14* format14;
     };
 } XfOtfCmapSubTable;
+
+/**
+ * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/cmap#platform-ids
+ * */
+typedef enum XfOtfCmapPlatformId : Uint16 {
+    XF_OTF_CMAP_PLATFORM_ID_MIN = 0,
+
+    XF_OTF_CMAP_PLATFORM_ID_VARIOUS = 0,
+    XF_OTF_CMAP_PLATFORM_ID_MAC     = 1,
+    XF_OTF_CMAP_PLATFORM_ID_ISO     = 2,
+    XF_OTF_CMAP_PLATFORM_ID_WIN     = 3,
+    XF_OTF_CMAP_PLATFORM_ID_CUSTOM  = 4,
+
+    XF_OTF_CMAP_PLATFORM_ID_MAX = 4
+} XfOtfCmapPlatformId;
+
+/**
+ * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/cmap#unicode-platform-platform-id--0 
+ * 
+ * - Use of encoding IDs 0, 1 or 2 is deprecated.
+ * - Encoding ID 3 should be used in conjunction with 'cmap' subtable formats 4 or 6.
+ * - Encoding ID 4 should be used in conjunction with subtable formats 10 or 12.
+ * 
+ * - Unicode Variation Sequences supported by the font should be specified in the 'cmap'
+ *   table using a format 14 subtable.
+ *
+ * - A format 14 subtable must only be used under platform ID 0 and encoding ID 5; 
+ * - Encoding ID 5 should only be used with a format 14 subtable.
+ * 
+ * - Encoding ID 6 should only be used in conjunction with 'cmap' subtable format 13;
+ * - Subtable format 13 should only be used under platform ID 0 and encoding ID 6.
+ * */
+typedef enum XfOtfCmapVariousEncodingId : Uint16 {
+    XF_OTF_CMAP_VARIOUS_ENCODING_ID_MIN = 0,
+
+    XF_OTF_CMAP_VARIOUS_ENCODING_ID_UNICODE_10                 = 0,
+    XF_OTF_CMAP_VARIOUS_ENCODING_ID_UNICODE_11                 = 1,
+    XF_OTF_CMAP_VARIOUS_ENCODING_ID_ISO_IEC_10646              = 2,
+    XF_OTF_CMAP_VARIOUS_ENCODING_ID_UNICODE_20_BMP_ONLY        = 3,
+    XF_OTF_CMAP_VARIOUS_ENCODING_ID_UNICODE_20_FULL_REPERTOIRE = 4,
+    XF_OTF_CMAP_VARIOUS_ENCODING_ID_UNICODE_VARIATION_SEQ      = 5,
+    XF_OTF_CMAP_VARIOUS_ENCODING_ID_UNICODE_FULL_REPERTOIRE    = 6,
+
+    XF_OTF_CMAP_VARIOUS_ENCODING_ID_MAX = 6
+} XfOtfCmapVariousEncodingId;
+
+/**
+ * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/name#macintosh-encoding-ids-script-manager-codes
+ * */
+typedef enum XfOtfCmapMacEncodingId : Uint16 {
+    XF_OTF_CMAP_MAC_ENCODING_ID_MIN = 0,
+
+    XF_OTF_CMAP_MAC_ENCODING_ID_ROMAN               = 0,
+    XF_OTF_CMAP_MAC_ENCODING_ID_JAPANESE            = 1,
+    XF_OTF_CMAP_MAC_ENCODING_ID_CHINESE_TRADITIONAL = 2,
+    XF_OTF_CMAP_MAC_ENCODING_ID_KOREAN              = 3,
+    XF_OTF_CMAP_MAC_ENCODING_ID_ARABIC              = 4,
+    XF_OTF_CMAP_MAC_ENCODING_ID_HEBREW              = 5,
+    XF_OTF_CMAP_MAC_ENCODING_ID_GREEK               = 6,
+    XF_OTF_CMAP_MAC_ENCODING_ID_RUSSIAN             = 7,
+    XF_OTF_CMAP_MAC_ENCODING_ID_RSYMBOL             = 8,
+    XF_OTF_CMAP_MAC_ENCODING_ID_DEVANAGARI          = 9,
+    XF_OTF_CMAP_MAC_ENCODING_ID_GURMUKHI            = 10,
+    XF_OTF_CMAP_MAC_ENCODING_ID_GUJARATI            = 11,
+    XF_OTF_CMAP_MAC_ENCODING_ID_ODIA                = 12,
+    XF_OTF_CMAP_MAC_ENCODING_ID_BANGLA              = 13,
+    XF_OTF_CMAP_MAC_ENCODING_ID_TAMIL               = 14,
+    XF_OTF_CMAP_MAC_ENCODING_ID_TELUGU              = 15,
+    XF_OTF_CMAP_MAC_ENCODING_ID_KANNADA             = 16,
+    XF_OTF_CMAP_MAC_ENCODING_ID_MALAYALAM           = 17,
+    XF_OTF_CMAP_MAC_ENCODING_ID_SINHALESE           = 18,
+    XF_OTF_CMAP_MAC_ENCODING_ID_BURMESE             = 19,
+    XF_OTF_CMAP_MAC_ENCODING_ID_KHMER               = 20,
+    XF_OTF_CMAP_MAC_ENCODING_ID_THAI                = 21,
+    XF_OTF_CMAP_MAC_ENCODING_ID_LAOTIAN             = 22,
+    XF_OTF_CMAP_MAC_ENCODING_ID_GEORGIAN            = 23,
+    XF_OTF_CMAP_MAC_ENCODING_ID_ARMENIAN            = 24,
+    XF_OTF_CMAP_MAC_ENCODING_ID_CHINESE_SIMPLIFIED  = 25,
+    XF_OTF_CMAP_MAC_ENCODING_ID_TIBETAN             = 26,
+    XF_OTF_CMAP_MAC_ENCODING_ID_MONGOLIAN           = 27,
+    XF_OTF_CMAP_MAC_ENCODING_ID_GEEZ                = 28,
+    XF_OTF_CMAP_MAC_ENCODING_ID_SLAVIC              = 29,
+    XF_OTF_CMAP_MAC_ENCODING_ID_VIETNAMESE          = 30,
+    XF_OTF_CMAP_MAC_ENCODING_ID_SINDHI              = 31,
+    XF_OTF_CMAP_MAC_ENCODING_ID_UNINTERPRETED       = 32,
+
+    XF_OTF_CMAP_MAC_ENCODING_ID_MAX = 32
+} XfOtfCmapMacEncodingId;
+
+/**
+ * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/cmap#iso-platform-platform-id--2
+ * */
+typedef enum XfOtfCmapIsoEncodingId : Uint16 {
+    XF_OTF_CMAP_ISO_ENCODING_ID_MIN = 0,
+
+    XF_OTF_CMAP_ISO_ENCODING_ID_7_BIT_ASCII = 0,
+    XF_OTF_CMAP_ISO_ENCODING_ID_ISO_10646   = 1,
+    XF_OTF_CMAP_ISO_ENCODING_ID_ISO_8859_1  = 2,
+
+    XF_OTF_CMAP_ISO_ENCODING_ID_MAX = 2,
+} XfOtfCmapIsoEncodingId;
+
+/**
+ * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/cmap#windows-platform-platform-id--3
+ * */
+typedef enum XfOtfCmapWinEncodingId : Uint16 {
+    XF_OTF_CMAP_WIN_ENCODING_ID_MIN = 0,
+
+    XF_OTF_CMAP_WIN_ENCODING_ID_SYMBOL                  = 0,
+    XF_OTF_CMAP_WIN_ENCODING_ID_UNICODE_BMP             = 1,
+    XF_OTF_CMAP_WIN_ENCODING_ID_SHIFTJIS                = 2,
+    XF_OTF_CMAP_WIN_ENCODING_ID_PRC                     = 3,
+    XF_OTF_CMAP_WIN_ENCODING_ID_BIG5                    = 4,
+    XF_OTF_CMAP_WIN_ENCODING_ID_WANSUNG                 = 5,
+    XF_OTF_CMAP_WIN_ENCODING_ID_JOHAB                   = 6,
+    XF_OTF_CMAP_WIN_ENCODING_ID_RESERVED_7              = 7,
+    XF_OTF_CMAP_WIN_ENCODING_ID_RESERVED_8              = 8,
+    XF_OTF_CMAP_WIN_ENCODING_ID_RESERVED_9              = 9,
+    XF_OTF_CMAP_WIN_ENCODING_ID_UNICODE_FULL_REPERTOIRE = 10,
+
+    XF_OTF_CMAP_WIN_ENCODING_ID_MAX = 10,
+} XfOtfCmapWinEncodingId;
+
+#define XF_OTF_CMAP_CUSTOM_ENCODING_ID_MIN 0
+#define XF_OTF_CMAP_CUSTOM_ENCODING_ID_MAX 255
+
+/**
+ * The array of encoding records specifies particular encodings and the offset to the
+ * subtable for each encoding.
+ *
+ * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/cmap#encoding-records-and-encodings
+ * */
+typedef struct XfOtfCmapEncodingRecord {
+    XfOtfCmapPlatformId platform_id;
+    union {
+        XfOtfCmapVariousEncodingId various;
+        XfOtfCmapMacEncodingId     mac;
+        XfOtfCmapIsoEncodingId     iso;
+        XfOtfCmapWinEncodingId     win;
+        Uint16 custom; /**< @b For legacy support, must be ignored in newer fonts. */
+    } encoding_id;
+    Uint32            sub_table_offset;
+    XfOtfCmapSubTable sub_table;
+} XfOtfCmapEncodingRecord;
+
+/**
+ * @b This table defines the mapping of character codes to the glyph index values used in the font.
+ * It may contain more than one subtable, in order to support more than one character encoding scheme.
+ *
+ * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/cmap#cmap-header
+ * */
+typedef struct XfOtfCmap {
+    Uint16                   version;
+    Uint16                   num_tables;
+    XfOtfCmapEncodingRecord* encoding_records;
+} XfOtfCmap;
+
+XfOtfCmap* xf_otf_cmap_init (XfOtfCmap* cmap, Uint8* data, Size size);
+XfOtfCmap* xf_otf_cmap_deinit (XfOtfCmap* cmap);
+XfOtfCmap* xf_otf_cmap_pprint (XfOtfCmap* cmap);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_CMAP_H
