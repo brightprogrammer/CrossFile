@@ -109,7 +109,7 @@ static inline XfOtfCmapSubTableFormat6*  sub_table_format6_pprint (XfOtfCmapSubT
 static inline XfOtfCmapSubTableFormat8*  sub_table_format8_pprint (XfOtfCmapSubTableFormat8* f8);
 static inline XfOtfCmapSubTableFormat10* sub_table_format10_pprint (XfOtfCmapSubTableFormat10* f10);
 static inline XfOtfCmapSubTableFormat12* sub_table_format12_pprint (XfOtfCmapSubTableFormat12* f12);
-#define sub_table_format13_pprint sub_table_format12_pprint
+static inline XfOtfCmapSubTableFormat13* sub_table_format13_pprint (XfOtfCmapSubTableFormat13* f13);
 static inline XfOtfCmapSubTableFormat14* sub_table_format14_pprint (XfOtfCmapSubTableFormat14* f14);
 
 static inline XfOtfCmapSubTable*
@@ -138,6 +138,20 @@ static inline XfOtfCmapSubTable* sub_table_pprint (XfOtfCmapSubTable* sub_table)
 #define SUB_TABLE_FORMAT13_DATA_SIZE SUB_TABLE_FORMAT12_DATA_SIZE
 #define SUB_TABLE_FORMAT14_DATA_SIZE (sizeof (Uint32) * 2)
 
+#define PPRINT_ARR_U1(arr, last_idx)                                                               \
+    putchar ('[');                                                                                 \
+    for (Size s = 0; s < 6; s++) {                                                                 \
+        printf ("%u, ", arr[s]);                                                                   \
+    }                                                                                              \
+    printf ("..., %u]\n", arr[last_idx]);
+
+#define PPRINT_ARR_U2(arr, last_idx)                                                               \
+    putchar ('[');                                                                                 \
+    for (Size s = 0; s < 6; s++) {                                                                 \
+        printf ("%u, ", arr[s]);                                                                   \
+    }                                                                                              \
+    printf ("..., %u]\n", arr[last_idx]);
+
 /**************************************************************************************************/
 /*********************************** PUBLIC METHOD DEFINITIONS ************************************/
 /**************************************************************************************************/
@@ -161,6 +175,10 @@ XfOtfCmap* xf_otf_cmap_init (XfOtfCmap* cmap, Uint8* data, Size size) {
         "Data buffer size not sufficient to initialize character to glyph index map \"cmap\".\n"
     );
 
+    /* required for reading sub tables */
+    Uint8* data_start    = data;
+    Size   original_size = size;
+
     cmap->version    = GET_AND_ADV_U2 (data);
     cmap->num_tables = GET_AND_ADV_U2 (data);
 
@@ -174,7 +192,9 @@ XfOtfCmap* xf_otf_cmap_init (XfOtfCmap* cmap, Uint8* data, Size size) {
     size -= CMAP_DATA_SIZE;
 
     for (Uint16 table_idx = 0; table_idx < cmap->num_tables; table_idx++) {
-        if (!encoding_record_init (cmap->encoding_records + table_idx, data, size)) {
+        XfOtfCmapEncodingRecord* enc = cmap->encoding_records + table_idx;
+
+        if (!encoding_record_init (enc, data, size)) {
             PRINT_ERR (
                 "Failed to read all encoding records in character to glyph index map "
                 "\"cmap\".\n"
@@ -182,6 +202,17 @@ XfOtfCmap* xf_otf_cmap_init (XfOtfCmap* cmap, Uint8* data, Size size) {
             xf_otf_cmap_deinit (cmap);
             return Null;
         }
+
+        RETURN_VALUE_IF (
+            !sub_table_init (
+                &enc->sub_table,
+                data_start + enc->sub_table_offset,
+                original_size - enc->sub_table_offset
+            ),
+            Null,
+            "Failed to read subtable inside cmap encoding record\n"
+        );
+
 
         size -= ENCODING_RECORD_DATA_SIZE;
         data += ENCODING_RECORD_DATA_SIZE;
@@ -203,11 +234,7 @@ XfOtfCmap* xf_otf_cmap_deinit (XfOtfCmap* cmap) {
 
     if (cmap->encoding_records) {
         for (Size idx = 0; idx < cmap->num_tables; idx++) {
-            RETURN_VALUE_IF (
-                !encoding_record_deinit (cmap->encoding_records + idx),
-                Null,
-                ERR_OBJECT_DEINITIALIZATION_FAILED
-            );
+            encoding_record_deinit (cmap->encoding_records + idx);
         }
 
         FREE (cmap->encoding_records);
@@ -273,12 +300,6 @@ static inline XfOtfCmapEncodingRecord*
     enc->encoding_id.custom = GET_AND_ADV_U2 (data);
     enc->sub_table_offset   = GET_AND_ADV_U4 (data);
 
-    RETURN_VALUE_IF (
-        !sub_table_init (&enc->sub_table, data, size),
-        Null,
-        "Failed to read subtable inside cmap encoding record\n"
-    );
-
     return enc;
 }
 
@@ -293,7 +314,7 @@ static inline XfOtfCmapEncodingRecord*
 static inline XfOtfCmapEncodingRecord* encoding_record_deinit (XfOtfCmapEncodingRecord* enc) {
     RETURN_VALUE_IF (!enc, Null, ERR_INVALID_ARGUMENTS);
 
-    RETURN_VALUE_IF (!sub_table_deinit (&enc->sub_table), Null, ERR_OBJECT_DEINITIALIZATION_FAILED);
+    sub_table_deinit (&enc->sub_table);
 
     return enc;
 }
@@ -439,6 +460,8 @@ static inline XfOtfCmapEncodingRecord* encoding_record_pprint (XfOtfCmapEncoding
         );
     }
 
+    sub_table_pprint (&enc->sub_table);
+
     return enc;
 }
 
@@ -460,6 +483,24 @@ static inline XfOtfCmapSubHeader*
     return sub_head;
 }
 
+static inline XfOtfCmapSubHeader* sub_header_pprint (XfOtfCmapSubHeader* sub_head) {
+    RETURN_VALUE_IF (!sub_head, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap Sub Header :\n"
+        "\tfirst_code = %u\n"
+        "\tentry_count = %u\n"
+        "\tid_delta = %d\n"
+        "\tid_range_offset = %u\n",
+        sub_head->first_code,
+        sub_head->entry_count,
+        sub_head->id_delta,
+        sub_head->id_range_offset
+    );
+
+    return sub_head;
+}
+
 static inline XfOtfCmapMapGroup* map_group_init (XfOtfCmapMapGroup* group, Uint8* data, Size size) {
     RETURN_VALUE_IF (!group || !data, Null, ERR_INVALID_ARGUMENTS);
 
@@ -472,6 +513,22 @@ static inline XfOtfCmapMapGroup* map_group_init (XfOtfCmapMapGroup* group, Uint8
     group->start_char_code = GET_AND_ADV_U4 (data);
     group->end_char_code   = GET_AND_ADV_U4 (data);
     group->glyph_id        = GET_AND_ADV_U4 (data);
+
+    return group;
+}
+
+static inline XfOtfCmapMapGroup* map_group_pprint (XfOtfCmapMapGroup* group) {
+    RETURN_VALUE_IF (!group, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap (Sequential/Constant) Map Group :\n"
+        "\tstart_char_code = %u\n"
+        "\tend_char_code = %u\n"
+        "\tglyph_id = %u\n",
+        group->start_char_code,
+        group->end_char_code,
+        group->glyph_id
+    );
 
     return group;
 }
@@ -497,6 +554,30 @@ static inline XfOtfCmapVarSelector*
     return sel;
 }
 
+static inline XfOtfCmapVarSelector* var_selector_pprint (XfOtfCmapVarSelector* sel) {
+    RETURN_VALUE_IF (!sel, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap Variation Selector :\n"
+        "\tvar_selector = %u\n"
+        "\tdefault_uvs_offset = %u\n"
+        "\tnon_default_uvs_offset = %u\n",
+        sel->var_selector,
+        sel->default_uvs_offset,
+        sel->non_default_uvs_offset
+    );
+
+    if (sel->default_uvs_offset) {
+        default_uvs_table_pprint (&sel->default_uvs_table);
+    }
+
+    if (sel->non_default_uvs_offset) {
+        non_default_uvs_table_pprint (&sel->non_default_uvs_table);
+    }
+
+    return sel;
+}
+
 static inline XfOtfCmapUnicodeRange*
     unicode_range_init (XfOtfCmapUnicodeRange* range, Uint8* data, Size size) {
     RETURN_VALUE_IF (!range || !data, Null, ERR_INVALID_ARGUMENTS);
@@ -516,6 +597,21 @@ static inline XfOtfCmapUnicodeRange*
 
     return range;
 }
+
+static inline XfOtfCmapUnicodeRange* unicode_range_pprint (XfOtfCmapUnicodeRange* range) {
+    RETURN_VALUE_IF (!range, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap Unicode Range :\n"
+        "\tstart_unicode_value = %u\n"
+        "\tadditional_count = %u\n",
+        range->start_unicode_value,
+        range->additional_count
+    );
+
+    return range;
+}
+
 static inline XfOtfCmapDefaultUVSTable*
     default_uvs_table_init (XfOtfCmapDefaultUVSTable* default_uvs, Uint8* data, Size size) {
     RETURN_VALUE_IF (!default_uvs || !data, Null, ERR_INVALID_ARGUMENTS);
@@ -552,6 +648,24 @@ static inline XfOtfCmapDefaultUVSTable*
     return default_uvs;
 }
 
+static inline XfOtfCmapDefaultUVSTable* default_uvs_table_pprint (
+    XfOtfCmapDefaultUVSTable* default_uvs
+) {
+    RETURN_VALUE_IF (!default_uvs, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap Default UVS Table :\n"
+        "\tnum_unicode_value_ranges = %u\n",
+        default_uvs->num_unicode_value_ranges
+    );
+
+    for (Size s = 0; s < default_uvs->num_unicode_value_ranges; s++) {
+        unicode_range_pprint (default_uvs->ranges + s);
+    }
+
+    return default_uvs;
+}
+
 static inline XfOtfCmapUVSMapping*
     uvs_mapping_init (XfOtfCmapUVSMapping* uvs_map, Uint8* data, Size size) {
     RETURN_VALUE_IF (!uvs_map || !data, Null, ERR_INVALID_ARGUMENTS);
@@ -568,6 +682,20 @@ static inline XfOtfCmapUVSMapping*
     uvs_map->uint24[0]     = GET_AND_ADV_U1 (data);
 
     uvs_map->glyph_id = GET_AND_ADV_U2 (data);
+
+    return uvs_map;
+}
+
+static inline XfOtfCmapUVSMapping* uvs_mapping_pprint (XfOtfCmapUVSMapping* uvs_map) {
+    RETURN_VALUE_IF (!uvs_map, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap UVS Mapping :\n"
+        "\tunicode_alue = %u\n"
+        "\tglyph_id = %u\n",
+        uvs_map->unicode_value,
+        uvs_map->glyph_id
+    );
 
     return uvs_map;
 }
@@ -612,6 +740,24 @@ static inline XfOtfCmapNonDefaultUVSTable* non_default_uvs_table_init (
     return non_default_uvs;
 }
 
+static inline XfOtfCmapNonDefaultUVSTable* non_default_uvs_table_pprint (
+    XfOtfCmapNonDefaultUVSTable* non_default_uvs
+) {
+    RETURN_VALUE_IF (!non_default_uvs, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap Non Default UVS Table :\n"
+        "\tnum_uvs_mappings = %u\n",
+        non_default_uvs->num_uvs_mappings
+    );
+
+    for (Size s = 0; s < non_default_uvs->num_uvs_mappings; s++) {
+        uvs_mapping_pprint (non_default_uvs->uvs_mappings + s);
+    }
+
+    return non_default_uvs;
+}
+
 static inline XfOtfCmapSubTableFormat0*
     sub_table_format0_init (XfOtfCmapSubTableFormat0* f0, Uint8* data, Size size) {
     RETURN_VALUE_IF (!f0 || !data, Null, ERR_INVALID_ARGUMENTS);
@@ -629,6 +775,24 @@ static inline XfOtfCmapSubTableFormat0*
     return f0;
 }
 
+static inline XfOtfCmapSubTableFormat0* sub_table_format0_pprint (XfOtfCmapSubTableFormat0* f0) {
+    RETURN_VALUE_IF (!f0, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap Sub Table Format 0 :\n"
+        "\tformat = 0 (Byte encoding table)\n"
+        "\tlength = %u\n"
+        "\tlanguge = %u\n",
+        f0->length,
+        f0->language
+    );
+
+    printf ("\tgylph_id_array = ");
+    PPRINT_ARR_U1 (f0->glyph_id_array, 255);
+
+    return f0;
+}
+
 static inline XfOtfCmapSubTableFormat2*
     sub_table_format2_init (XfOtfCmapSubTableFormat2* f2, Uint8* data, Size size) {
     RETURN_VALUE_IF (!f2 || !data, Null, ERR_INVALID_ARGUMENTS);
@@ -642,6 +806,26 @@ static inline XfOtfCmapSubTableFormat2*
     f2->length   = GET_AND_ADV_U2 (data);
     f2->language = GET_AND_ADV_U2 (data);
     memcpy (f2->sub_header_keys, data, sizeof (Uint16) * 256);
+
+    return f2;
+}
+
+static inline XfOtfCmapSubTableFormat2* sub_table_format2_pprint (XfOtfCmapSubTableFormat2* f2) {
+    RETURN_VALUE_IF (!f2, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap Sub Table Format 2 :\n"
+        "\tformat = 2 (High-byte mapping through table)\n"
+        "\tlength = %u\n"
+        "\tlanguage = %u\n",
+        f2->length,
+        f2->language
+    );
+
+    printf ("\tsub_header_keys = ");
+    PPRINT_ARR_U1 (f2->sub_header_keys, 255);
+
+    PRINT_ERR ("How to print sub_headers and glyph_id_array?\n");
 
     return f2;
 }
@@ -713,6 +897,40 @@ static inline XfOtfCmapSubTableFormat4* sub_table_format4_deinit (XfOtfCmapSubTa
     return f4;
 }
 
+static inline XfOtfCmapSubTableFormat4* sub_table_format4_pprint (XfOtfCmapSubTableFormat4* f4) {
+    RETURN_VALUE_IF (!f4, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap Sub Table Format 4\n"
+        "\tformat = 4 (Segment mapping to delta values)\n"
+        "\tlength = %u\n"
+        "\tlanguage = %u\n"
+        "\tseg_count = %u\n"
+        "\tsearch_range = %u\n"
+        "\tentry_selector = %u\n"
+        "\trange_shift = %u\n",
+        f4->length,
+        f4->language,
+        f4->seg_count,
+        f4->search_range,
+        f4->entry_selector,
+        f4->range_shift
+    );
+
+    printf ("\tend_code = ");
+    PPRINT_ARR_U2 (f4->end_code, f4->seg_count - 1);
+    printf ("\tstart_code = ");
+    PPRINT_ARR_U2 (f4->start_code, f4->seg_count - 1);
+    printf ("\tid_delta = ");
+    PPRINT_ARR_U2 (f4->id_delta, f4->seg_count - 1);
+    printf ("\tid_range_offsets = ");
+    PPRINT_ARR_U2 (f4->id_range_offsets, f4->seg_count - 1);
+    printf ("\tglyph_id_array = ");
+    PPRINT_ARR_U2 (f4->glyph_id_array, f4->seg_count - 1);
+
+    return f4;
+}
+
 static inline XfOtfCmapSubTableFormat6*
     sub_table_format6_init (XfOtfCmapSubTableFormat6* f6, Uint8* data, Size size) {
     RETURN_VALUE_IF (!f6 || !data, Null, ERR_INVALID_ARGUMENTS);
@@ -753,6 +971,26 @@ static inline XfOtfCmapSubTableFormat6* sub_table_format6_deinit (XfOtfCmapSubTa
         FREE (f6->glyph_id_array);
         f6->glyph_id_array = Null;
     }
+
+    return f6;
+}
+
+static inline XfOtfCmapSubTableFormat6* sub_table_format6_pprint (XfOtfCmapSubTableFormat6* f6) {
+    RETURN_VALUE_IF (!f6, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap Sub Table Format 6 :\n"
+        "\tformat = 6 (Trimmed table mapping)\n"
+        "\tlength = %u\n"
+        "\tlanguage = %u\n"
+        "\tfirst_code = %u\n",
+        f6->length,
+        f6->language,
+        f6->first_code
+    );
+
+    printf ("\tglyph_id_array = ");
+    PPRINT_ARR_U2 (f6->glyph_id_array, f6->entry_count - 1);
 
     return f6;
 }
@@ -813,6 +1051,30 @@ static inline XfOtfCmapSubTableFormat8* sub_table_format8_deinit (XfOtfCmapSubTa
     return f8;
 }
 
+static inline XfOtfCmapSubTableFormat8* sub_table_format8_pprint (XfOtfCmapSubTableFormat8* f8) {
+    RETURN_VALUE_IF (!f8, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap Sub Table Format 8 :\n"
+        "\tformat = 8 (mixed 16-bit and 32-bit coverage)\n"
+        "\tlength = %u\n"
+        "\tlanguage = %u\n",
+        f8->length,
+        f8->language
+    );
+
+    printf ("\tis32 = ");
+    PPRINT_ARR_U1 (f8->is32, 8192 - 1);
+
+    printf ("\tnum_groups = %u\n", f8->num_groups);
+
+    for (Size s = 0; s < f8->num_groups; s++) {
+        map_group_pprint (f8->groups + s);
+    }
+
+    return f8;
+}
+
 static inline XfOtfCmapSubTableFormat10*
     sub_table_format10_init (XfOtfCmapSubTableFormat10* fa, Uint8* data, Size size) {
     RETURN_VALUE_IF (!fa || !data, Null, ERR_INVALID_ARGUMENTS);
@@ -859,6 +1121,29 @@ static inline XfOtfCmapSubTableFormat10* sub_table_format10_deinit (XfOtfCmapSub
     }
 
     return fa;
+}
+
+static inline XfOtfCmapSubTableFormat10* sub_table_format10_pprint (XfOtfCmapSubTableFormat10* f10
+) {
+    RETURN_VALUE_IF (!f10, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap Sub Table Format 8 :\n"
+        "\tformat = 8 (Trimmed array)\n"
+        "\tlength = %u\n"
+        "\tlanguage = %u\n"
+        "\tstart_char_code = %u\n"
+        "\tnum_chars = %u\n",
+        f10->length,
+        f10->language,
+        f10->start_char_code,
+        f10->num_chars
+    );
+
+    printf ("\tglyph_id_array = ");
+    PPRINT_ARR_U2 (f10->glyph_id_array, f10->num_chars - 1);
+
+    return f10;
 }
 
 static inline XfOtfCmapSubTableFormat12*
@@ -914,6 +1199,50 @@ static inline XfOtfCmapSubTableFormat12* sub_table_format12_deinit (XfOtfCmapSub
     return fc;
 }
 
+static inline XfOtfCmapSubTableFormat12* sub_table_format12_pprint (XfOtfCmapSubTableFormat12* f12
+) {
+    RETURN_VALUE_IF (!f12, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap Sub Table Format 12 :\n"
+        "\tformat = 12 (Segmented coverage)\n"
+        "\tlength = %u\n"
+        "\tlanguage = %u\n"
+        "\tnum_groups = %u\n",
+        f12->length,
+        f12->language,
+        f12->num_groups
+    );
+
+    for (Size s = 0; s < f12->num_groups; s++) {
+        map_group_pprint (f12->groups + s);
+    }
+
+    return f12;
+}
+
+static inline XfOtfCmapSubTableFormat13* sub_table_format13_pprint (XfOtfCmapSubTableFormat13* f13
+) {
+    RETURN_VALUE_IF (!f13, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap Sub Table Format 12 :\n"
+        "\tformat = 13 (Many-to-one range mappings)\n"
+        "\tlength = %u\n"
+        "\tlanguage = %u\n"
+        "\tnum_groups = %u\n",
+        f13->length,
+        f13->language,
+        f13->num_groups
+    );
+
+    for (Size s = 0; s < f13->num_groups; s++) {
+        map_group_pprint (f13->groups + s);
+    }
+
+    return f13;
+}
+
 static inline XfOtfCmapSubTableFormat14*
     sub_table_format14_init (XfOtfCmapSubTableFormat14* fe, Uint8* data, Size size) {
     RETURN_VALUE_IF (!fe || !data, Null, ERR_INVALID_ARGUMENTS);
@@ -965,6 +1294,25 @@ static inline XfOtfCmapSubTableFormat14* sub_table_format14_deinit (XfOtfCmapSub
     return fe;
 }
 
+static inline XfOtfCmapSubTableFormat14* sub_table_format14_pprint (XfOtfCmapSubTableFormat14* fe) {
+    RETURN_VALUE_IF (!fe, Null, ERR_INVALID_ARGUMENTS);
+
+    printf (
+        "Cmap Sub Table Format 14\n"
+        "\tformat = 14 (Unicode Variation Sequences)\n"
+        "\tlength = %u\n"
+        "\tnum_var_selectors = %u\n",
+        fe->length,
+        fe->num_var_selectors
+    );
+
+    for (Size s = 0; s < fe->num_var_selectors; s++) {
+        var_selector_pprint (fe->var_selectors + s);
+    }
+
+    return fe;
+}
+
 static inline XfOtfCmapSubTable*
     sub_table_init (XfOtfCmapSubTable* sub_table, Uint8* data, Size size) {
     RETURN_VALUE_IF (!sub_table || !data, Null, ERR_INVALID_ARGUMENTS);
@@ -991,6 +1339,7 @@ static inline XfOtfCmapSubTable*
             Null,                                                                                  \
             "Failed to read cmap sub_table format " #fmt "\n"                                      \
         );                                                                                         \
+        return sub_table;                                                                          \
     }
         DEF_CASE (0)
         DEF_CASE (2)
@@ -1005,7 +1354,7 @@ static inline XfOtfCmapSubTable*
 #undef DEF_CASE
         default :
             PRINT_ERR ("Invalid sub table format \"%u\"\n", sub_table->format);
-            return Null;
+            return sub_table;
     }
 }
 
@@ -1015,12 +1364,51 @@ static inline XfOtfCmapSubTable* sub_table_deinit (XfOtfCmapSubTable* sub_table)
     switch (sub_table->format) {
 #define DEF_CASE(fmt)                                                                              \
     case fmt : {                                                                                   \
-        RETURN_VALUE_IF (                                                                          \
-            !sub_table_format##fmt##_deinit (sub_table->format##fmt),                              \
-            Null,                                                                                  \
-            ERR_OBJECT_DEINITIALIZATION_FAILED                                                     \
-        );                                                                                         \
+        sub_table_format##fmt##_deinit (sub_table->format##fmt);                                   \
+        break;                                                                                     \
     }
+
+        case 0 :
+            break;
+        case 2 :
+            break;
+
+            DEF_CASE (4)
+            DEF_CASE (6)
+            DEF_CASE (8)
+            DEF_CASE (10)
+            DEF_CASE (12)
+            DEF_CASE (13)
+            DEF_CASE (14)
+
+#undef DEF_CASE
+        default :
+            PRINT_ERR ("Invalid sub table format \"%u\"\n", sub_table->format);
+            return Null;
+    }
+
+    /* all union members have same value, so just free any one, the format does
+     * not matter now. */
+    if (sub_table->format0) {
+        FREE (sub_table->format0);
+        sub_table->format0 = Null;
+    }
+
+    return sub_table;
+}
+
+static inline XfOtfCmapSubTable* sub_table_pprint (XfOtfCmapSubTable* sub_table) {
+    RETURN_VALUE_IF (!sub_table, Null, ERR_INVALID_ARGUMENTS);
+
+    switch (sub_table->format) {
+#define DEF_CASE(fmt)                                                                              \
+    case fmt : {                                                                                   \
+        sub_table_format##fmt##_pprint (sub_table->format##fmt);                                   \
+        return sub_table;                                                                          \
+    }
+
+        DEF_CASE (0)
+        DEF_CASE (2)
         DEF_CASE (4)
         DEF_CASE (6)
         DEF_CASE (8)

@@ -54,16 +54,6 @@ typedef struct XfOtfCmapMapGroup {
     };
 } XfOtfCmapMapGroup;
 
-typedef struct XfOtfCmapVarSelector {
-    /* HACK: This union is a hack to implement Uint24 type in C. */
-    union {
-        Uint8  uint24[3];
-        Uint32 var_selector;
-    };
-    Uint32 default_uvs_offset;
-    Uint32 non_default_uvs_offset;
-} XfOtfCmapVarSelector;
-
 typedef struct XfOtfCmapUnicodeRange {
     /* HACK : This union is a hack to emulate uint24 type in C. */
     union {
@@ -91,6 +81,19 @@ typedef struct XfOtfCmapNonDefaultUVSTable {
     Uint32               num_uvs_mappings;
     XfOtfCmapUVSMapping* uvs_mappings;
 } XfOtfCmapNonDefaultUVSTable;
+
+typedef struct XfOtfCmapVarSelector {
+    /* HACK: This union is a hack to implement Uint24 type in C. */
+    union {
+        Uint8  uint24[3];
+        Uint32 var_selector;
+    };
+    Uint32 default_uvs_offset;
+    Uint32 non_default_uvs_offset;
+
+    XfOtfCmapDefaultUVSTable    default_uvs_table;
+    XfOtfCmapNonDefaultUVSTable non_default_uvs_table;
+} XfOtfCmapVarSelector;
 
 typedef struct XfOtfCmapSubTableFormat0 {
     Uint16 length;
