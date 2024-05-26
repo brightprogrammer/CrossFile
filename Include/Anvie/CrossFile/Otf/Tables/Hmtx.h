@@ -1,6 +1,6 @@
 /**
- * @file Otf.h
- * @date Wed, 22nd May 2024
+ * @file Hmtx.h
+ * @date Sun, 26th May 2024
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright 2024 Siddharth Mishra
  * @copyright Copyright 2024 Anvie Labs
@@ -30,31 +30,46 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * */
 
-#ifndef ANVIE_CROSSFILE_OTF_OTF_H
-#define ANVIE_CROSSFILE_OTF_OTF_H
+#ifndef ANVIE_CROSSFILE_OTF_TABLES_HMTX_H
+#define ANVIE_CROSSFILE_OTF_TABLES_HMTX_H
 
-#include <Anvie/Common.h>
 #include <Anvie/Types.h>
 
-/* crossfile */
-#include <Anvie/CrossFile/File.h>
-#include <Anvie/CrossFile/Otf/Tables.h>
+/* fwd-declarations */
+typedef struct XfOtfHhea XfOtfHhea;
+typedef struct XfOtfMaxp XfOtfMaxp;
 
-typedef struct XfOtfFile {
-    XfFile        file;
-    XfOtfTableDir table_directory;
+/* REF : https://learn.microsoft.com/en-us/typography/opentype/spec/hmtx */
 
-    /* data from table records */
-    XfOtfCmap cmap;
-    XfOtfHead head;
-    XfOtfHhea hhea;
-    XfOtfHmtx hmtx;
-    XfOtfMaxp maxp;
-    XfOtfLoca loca;
-} XfOtfFile;
+typedef struct XfOtfHmtxLongHorMetric {
+    Uint16 advance_width;
+    Int16  left_side_bearing;
+} XfOtfHmtxLongHorMetric;
 
-XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename);
-XfOtfFile* xf_otf_file_close (XfOtfFile* otf_file);
-XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file, Uint8 identation_level);
+typedef struct XfOtfHmtx {
+    /**
+     * @b Custom added field, not in binary file. Dedcued from Hhea table. 
+     * */
+    Uint16 num_h_metrics;
 
-#endif // ANVIE_CROSSFILE_OTF_OTF_H
+    XfOtfHmtxLongHorMetric *h_metrics; /**< @b Array of horizontal metrics present in binary file */
+
+    /**
+     * @b Custom added field, not in binary file. Deduced from Maxp and Hhea tables.
+     * */
+    Uint16 num_left_side_bearings;
+
+    /**
+     * @b Array of left side bearings for glyph ids greater than or equal to
+     * number of horizontal metrics (num_h_metrics).
+     * This is present in binary file.
+     * */
+    Int16 *left_side_bearings;
+} XfOtfHmtx;
+
+XfOtfHmtx *
+    xf_otf_hmtx_init (XfOtfHmtx *hmtx, XfOtfHhea *hhea, XfOtfMaxp *maxp, Uint8 *data, Size size);
+XfOtfHmtx *xf_otf_hmtx_deinit (XfOtfHmtx *hmtx);
+XfOtfHmtx *xf_otf_hmtx_pprint (XfOtfHmtx *hmtx, Uint8 indent_level);
+
+#endif // ANVIE_CROSSFILE_OTF_TABLES_HMTX_H

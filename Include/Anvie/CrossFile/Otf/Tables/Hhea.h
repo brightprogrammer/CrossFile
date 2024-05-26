@@ -1,6 +1,6 @@
 /**
- * @file Otf.h
- * @date Wed, 22nd May 2024
+ * @file Hhea.h
+ * @date Sun, 26th May 2024
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright 2024 Siddharth Mishra
  * @copyright Copyright 2024 Anvie Labs
@@ -30,31 +30,35 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * */
 
-#ifndef ANVIE_CROSSFILE_OTF_OTF_H
-#define ANVIE_CROSSFILE_OTF_OTF_H
+#ifndef ANVIE_CROSSFILE_OTF_TABLES_HHEA_H
+#define ANVIE_CROSSFILE_OTF_TABLES_HHEA_H
 
-#include <Anvie/Common.h>
 #include <Anvie/Types.h>
 
-/* crossfile */
-#include <Anvie/CrossFile/File.h>
-#include <Anvie/CrossFile/Otf/Tables.h>
+/**
+ * @b Horizontal Header Table.
+ *
+ * REF :  https://learn.microsoft.com/en-us/typography/opentype/spec/hhea
+ * */
+typedef struct XfOtfHhea {
+    Uint16 major_version;
+    Uint16 minor_version;
+    Int16  ascender;
+    Int16  descender;
+    Int16  line_gap;
+    Uint16 advance_width_max;
+    Int16  min_left_side_bearing;
+    Int16  min_right_side_bearing;
+    Int16  x_max_extent;
+    Int16  caret_slope_rise;
+    Int16  caret_slope_run;
+    Int16  caret_offset;
+    Int16  reserved[4];
+    Int16  metric_data_format;
+    Uint16 number_of_h_metrics;
+} XfOtfHhea;
 
-typedef struct XfOtfFile {
-    XfFile        file;
-    XfOtfTableDir table_directory;
+XfOtfHhea * xf_otf_hhea_init(XfOtfHhea* hhea, Uint8 *data, Size size);
+XfOtfHhea *xf_otf_hhea_pprint(XfOtfHhea *hhea, Uint8 indent_level);
 
-    /* data from table records */
-    XfOtfCmap cmap;
-    XfOtfHead head;
-    XfOtfHhea hhea;
-    XfOtfHmtx hmtx;
-    XfOtfMaxp maxp;
-    XfOtfLoca loca;
-} XfOtfFile;
-
-XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename);
-XfOtfFile* xf_otf_file_close (XfOtfFile* otf_file);
-XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file, Uint8 identation_level);
-
-#endif // ANVIE_CROSSFILE_OTF_OTF_H
+#endif // ANVIE_CROSSFILE_OTF_TABLES_HHEA_H

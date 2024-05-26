@@ -35,6 +35,8 @@
 
 #include <Anvie/CrossFile/Otf/Tables/Cmap.h>
 #include <Anvie/CrossFile/Otf/Tables/Head.h>
+#include <Anvie/CrossFile/Otf/Tables/Hhea.h>
+#include <Anvie/CrossFile/Otf/Tables/Hmtx.h>
 #include <Anvie/CrossFile/Otf/Tables/Loca.h>
 #include <Anvie/CrossFile/Otf/Tables/Maxp.h>
 
@@ -51,7 +53,7 @@ typedef enum XfOtfTableTag : Uint32 {
     XF_OTF_TABLE_TAG_CMAP = 0x70616d63, /* cmap */
     XF_OTF_TABLE_TAG_HEAD = 0x64616568, /* head */
     XF_OTF_TABLE_TAG_HHEA = 0x61656868, /* hhea */
-    XF_OTF_TABLE_TAG_HTMX = 0x786d7468, /* htmx */
+    XF_OTF_TABLE_TAG_HMTX = 0x78746d68, /* hmtx */
     XF_OTF_TABLE_TAG_MAXP = 0x7078616d, /* maxp */
     XF_OTF_TABLE_TAG_NAME = 0x656d616e, /* name */
     XF_OTF_TABLE_TAG_OS_2 = 0x325f534f, /* OS/2 */

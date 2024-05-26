@@ -50,6 +50,9 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
      * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables */
     Uint8 found_required_records_count = 0;
 
+    Uint8* hmtx_data      = Null;
+    Size   hmtx_data_size = 0;
+
     /* iterate over table records and load known records */
     for (Size s = 0; s < otf_file->table_directory.num_tables; s++) {
         /* get record */
@@ -57,13 +60,13 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
 
         switch (record->table_tag) {
             case XF_OTF_TABLE_TAG_CMAP : {
-                RETURN_VALUE_IF (
+                GOTO_HANDLER_IF (
                     !xf_otf_cmap_init (
                         &otf_file->cmap,
                         otf_file->file.data + record->offset,
                         record->length
                     ),
-                    Null,
+                    INIT_FAILED,
                     "Failed to initialize char to glyph index map \"cmap\".\n"
                 );
                 found_required_records_count++;
@@ -71,27 +74,48 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
             }
 
             case XF_OTF_TABLE_TAG_HEAD : {
-                RETURN_VALUE_IF (
+                GOTO_HANDLER_IF (
                     !xf_otf_head_init (
                         &otf_file->head,
                         otf_file->file.data + record->offset,
                         record->length
                     ),
-                    Null,
+                    INIT_FAILED,
                     "Failed to initialize font header table \"head\".\n"
                 );
                 found_required_records_count++;
                 break;
             }
 
+            case XF_OTF_TABLE_TAG_HHEA : {
+                GOTO_HANDLER_IF (
+                    !xf_otf_hhea_init (
+                        &otf_file->hhea,
+                        otf_file->file.data + record->offset,
+                        record->length
+                    ),
+                    INIT_FAILED,
+                    "Failed to initialize horizontal header table \"hhea\".\n"
+                );
+                found_required_records_count++;
+                break;
+            }
+
+            case XF_OTF_TABLE_TAG_HMTX : {
+                PRINT_ERR ("hmtx FOUND\n");
+                hmtx_data      = otf_file->file.data + record->offset;
+                hmtx_data_size = record->length;
+                break;
+            }
+
             case XF_OTF_TABLE_TAG_MAXP : {
-                RETURN_VALUE_IF (
+                GOTO_HANDLER_IF (
                     !xf_otf_maxp_init (
                         &otf_file->maxp,
                         otf_file->file.data + record->offset,
                         record->length
                     ),
-                    Null,
+                    INIT_FAILED,
                     "Failed to initialize max profile table \"maxp\".\n"
                 );
                 found_required_records_count++;
@@ -103,9 +127,32 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
         }
     }
 
+    /* need to initialize hmtx after hhea nad maxp tables are loaded */
+    {
+        GOTO_HANDLER_IF (
+            !hmtx_data || !hmtx_data_size,
+            INIT_FAILED,
+            "hmtx table not found. hmtx is a required table in OTF font files.\n"
+        );
+
+        GOTO_HANDLER_IF (
+            !xf_otf_hmtx_init (
+                &otf_file->hmtx,
+                &otf_file->hhea,
+                &otf_file->maxp,
+                hmtx_data,
+                hmtx_data_size
+            ),
+            INIT_FAILED,
+            "Failed to initialize horizontal metric table \"hmtx\".\n"
+        );
+
+        found_required_records_count++;
+    }
+
     /* check whether we've found all required records */
     GOTO_HANDLER_IF (
-        found_required_records_count != 3,
+        found_required_records_count != 5,
         INIT_FAILED,
         "Failed to find some of the required table records.\n"
     );
@@ -120,6 +167,7 @@ INIT_FAILED:
 XfOtfFile* xf_otf_file_close (XfOtfFile* otf_file) {
     RETURN_VALUE_IF (!otf_file, Null, ERR_INVALID_ARGUMENTS);
 
+    xf_otf_hmtx_deinit (&otf_file->hmtx);
     xf_otf_cmap_deinit (&otf_file->cmap);
 
     if (otf_file->table_directory.table_records) {
@@ -156,9 +204,11 @@ XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file, Uint8 indent_level) {
     );
 
     xf_otf_table_dir_pprint (&otf_file->table_directory, indent_level + 1);
-    xf_otf_head_pprint (&otf_file->head, indent_level + 1);
-    xf_otf_maxp_pprint (&otf_file->maxp, indent_level + 1);
     xf_otf_cmap_pprint (&otf_file->cmap, indent_level + 1);
+    xf_otf_head_pprint (&otf_file->head, indent_level + 1);
+    xf_otf_hhea_pprint (&otf_file->hhea, indent_level + 1);
+    xf_otf_hmtx_pprint (&otf_file->hmtx, indent_level + 1);
+    xf_otf_maxp_pprint (&otf_file->maxp, indent_level + 1);
 
     return otf_file;
 }

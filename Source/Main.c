@@ -4,10 +4,6 @@
 /* crossfile */
 #include <Anvie/CrossFile/Otf/Otf.h>
 
-// #define TTF_FONT_PATH "../Assets/Files/FontFiles/monospace-font/MonospaceBold-zmP0.ttf"
-// #define TTF_FONT_PATH "../Assets/Files/FontFiles/monospace-font/MonospaceOblique-5meB.ttf"
-#define TTF_FONT_PATH "/home/misra/Documents/Olivia-Regular.otf"
-
 Int32 main (int argc, char** argv) {
     RETURN_VALUE_IF (argc < 2, EXIT_FAILURE, "USAGE : %s <ttf/otf font file path>\n", argv[0]);
 
