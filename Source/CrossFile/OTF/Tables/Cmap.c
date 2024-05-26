@@ -56,6 +56,7 @@ static inline XfOtfCmapMapGroup* map_group_pprint (XfOtfCmapMapGroup* group, Uin
 
 static inline XfOtfCmapVarSelector*
     var_selector_init (XfOtfCmapVarSelector* sel, Uint8* data, Size size);
+static inline XfOtfCmapVarSelector* var_selector_deinit (XfOtfCmapVarSelector* sel);
 static inline XfOtfCmapVarSelector*
     var_selector_pprint (XfOtfCmapVarSelector* sel, Uint8 indent_level);
 
@@ -66,6 +67,8 @@ static inline XfOtfCmapUnicodeRange*
 
 static inline XfOtfCmapDefaultUVSTable*
     default_uvs_table_init (XfOtfCmapDefaultUVSTable* default_uvs, Uint8* data, Size size);
+static inline XfOtfCmapDefaultUVSTable* default_uvs_table_deinit (XfOtfCmapDefaultUVSTable* uvs_map
+);
 static inline XfOtfCmapDefaultUVSTable*
     default_uvs_table_pprint (XfOtfCmapDefaultUVSTable* uvs_map, Uint8 indent_level);
 
@@ -78,6 +81,9 @@ static inline XfOtfCmapNonDefaultUVSTable* non_default_uvs_table_init (
     XfOtfCmapNonDefaultUVSTable* non_default_uvs,
     Uint8*                       data,
     Size                         size
+);
+static inline XfOtfCmapNonDefaultUVSTable* non_default_uvs_table_deinit (
+    XfOtfCmapNonDefaultUVSTable* non_default_uvs
 );
 static inline XfOtfCmapNonDefaultUVSTable*
     non_default_uvs_table_pprint (XfOtfCmapNonDefaultUVSTable* non_default_uvs, Uint8 indent_level);
@@ -618,6 +624,49 @@ static inline XfOtfCmapVarSelector*
     sel->default_uvs_offset     = GET_AND_ADV_U4 (data);
     sel->non_default_uvs_offset = GET_AND_ADV_U4 (data);
 
+    if (sel->default_uvs_offset) {
+        RETURN_VALUE_IF (
+            !default_uvs_table_init (
+                &sel->default_uvs_table,
+                /* default uvs offset is from the beginning of table format 14 */
+                data + (sel->default_uvs_offset - VAR_SELECTOR_DATA_SIZE),
+                /* adjusted size : skipped bytes due to offset, this will automatically skip
+                 * all the bytes at the beginning of var selector, so we don't really need to subtract,
+                 * the VAR_SELECTOR_DATA_SIZE value from the size. */
+                size - sel->default_uvs_offset
+            ),
+            Null,
+            "Failed to read default UVS (Unicode Variation Selector) table in variation seletor\n"
+        );
+    }
+
+    if (sel->non_default_uvs_offset) {
+        RETURN_VALUE_IF (
+            !non_default_uvs_table_init (
+                &sel->non_default_uvs_table,
+                data + (sel->non_default_uvs_offset - VAR_SELECTOR_DATA_SIZE),
+                size - sel->non_default_uvs_offset
+            ),
+            Null,
+            "Failed to read non-default UVS (Unicode Variation Selector) table in variation "
+            "seletor\n"
+        );
+    }
+
+    return sel;
+}
+
+static inline XfOtfCmapVarSelector* var_selector_deinit (XfOtfCmapVarSelector* sel) {
+    RETURN_VALUE_IF (!sel, Null, ERR_INVALID_ARGUMENTS);
+
+    if (sel->default_uvs_offset) {
+        default_uvs_table_deinit (&sel->default_uvs_table);
+    }
+
+    if (sel->non_default_uvs_offset) {
+        non_default_uvs_table_deinit (&sel->non_default_uvs_table);
+    }
+
     return sel;
 }
 
@@ -734,6 +783,19 @@ static inline XfOtfCmapDefaultUVSTable*
     return default_uvs;
 }
 
+static inline XfOtfCmapDefaultUVSTable* default_uvs_table_deinit (
+    XfOtfCmapDefaultUVSTable* default_uvs
+) {
+    RETURN_VALUE_IF (!default_uvs, Null, ERR_INVALID_ARGUMENTS);
+
+    if (default_uvs->ranges) {
+        FREE (default_uvs->ranges);
+    }
+
+    memset (default_uvs, 0, sizeof (XfOtfCmapDefaultUVSTable));
+    return default_uvs;
+}
+
 static inline XfOtfCmapDefaultUVSTable*
     default_uvs_table_pprint (XfOtfCmapDefaultUVSTable* default_uvs, Uint8 indent_level) {
     RETURN_VALUE_IF (!default_uvs, Null, ERR_INVALID_ARGUMENTS);
@@ -838,6 +900,19 @@ static inline XfOtfCmapNonDefaultUVSTable* non_default_uvs_table_init (
         size -= UNICODE_RANGE_DATA_SIZE;
     }
 
+    return non_default_uvs;
+}
+
+static inline XfOtfCmapNonDefaultUVSTable* non_default_uvs_table_deinit (
+    XfOtfCmapNonDefaultUVSTable* non_default_uvs
+) {
+    RETURN_VALUE_IF (!non_default_uvs, Null, ERR_INVALID_ARGUMENTS);
+
+    if (non_default_uvs->uvs_mappings) {
+        FREE (non_default_uvs->uvs_mappings);
+    }
+
+    memset (non_default_uvs, 0, sizeof (XfOtfCmapNonDefaultUVSTable));
     return non_default_uvs;
 }
 
@@ -1641,10 +1716,14 @@ static inline XfOtfCmapSubTableFormat14* sub_table_format14_deinit (XfOtfCmapSub
     RETURN_VALUE_IF (!fe, Null, ERR_INVALID_ARGUMENTS);
 
     if (fe->var_selectors) {
+        for (Uint16 s = 0; s < fe->num_var_selectors; s++) {
+            var_selector_deinit (fe->var_selectors + s);
+        }
+
         FREE (fe->var_selectors);
-        fe->var_selectors = Null;
     }
 
+    memset (fe, 0, sizeof (XfOtfCmapSubTableFormat14));
     return fe;
 }
 
