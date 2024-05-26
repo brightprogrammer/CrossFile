@@ -119,9 +119,10 @@ typedef struct XfOtfCmapSubTableFormat4 {
     Uint16* end_code;
     Uint16  reserved_pad;
     Uint16* start_code;
-    Uint16* id_delta;
+    Int16* id_delta;
     Uint16* id_range_offsets;
-    Uint16* glyph_id_array;
+    Uint16  num_glyph_ids; /**< @b computed value, not present in binary */
+    Uint16* glyph_id_array; /**< @b This is an arbitrary sized array acc to spec. */
 } XfOtfCmapSubTableFormat4;
 
 typedef struct XfOtfCmapSubTableFormat6 {

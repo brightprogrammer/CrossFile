@@ -140,17 +140,24 @@ static inline XfOtfCmapSubTable* sub_table_pprint (XfOtfCmapSubTable* sub_table)
 
 #define PPRINT_ARR_U1(arr, last_idx)                                                               \
     putchar ('[');                                                                                 \
-    for (Size s = 0; s < 6; s++) {                                                                 \
+    for (Int64 s = 0; s < MIN (6, last_idx); s++) {                                                 \
         printf ("%u, ", arr[s]);                                                                   \
     }                                                                                              \
-    printf ("..., %u]\n", arr[last_idx]);
+    printf ("]\n");
 
 #define PPRINT_ARR_U2(arr, last_idx)                                                               \
     putchar ('[');                                                                                 \
-    for (Size s = 0; s < 6; s++) {                                                                 \
+    for (Int64 s = 0; s < MIN (6, last_idx); s++) {                                                 \
         printf ("%u, ", arr[s]);                                                                   \
     }                                                                                              \
-    printf ("..., %u]\n", arr[last_idx]);
+    printf ("]\n");
+
+#define PPRINT_ARR_I2(arr, last_idx)                                                               \
+    putchar ('[');                                                                                 \
+    for (Int64 s = 0; s < MIN (6, last_idx); s++) {                                                 \
+        printf ("%d, ", arr[s]);                                                                   \
+    }                                                                                              \
+    printf ("]\n");
 
 /**************************************************************************************************/
 /*********************************** PUBLIC METHOD DEFINITIONS ************************************/
@@ -855,36 +862,79 @@ static inline XfOtfCmapSubTableFormat4*
     if (f4->seg_count) {
         size -= SUB_TABLE_FORMAT4_DATA_SIZE;
 
+        Size required_size = (sizeof (Uint16) * f4->seg_count * 4 + sizeof (Uint16));
+
         RETURN_VALUE_IF (
-            size < (sizeof (Uint16) * f4->seg_count * 5 + sizeof (Uint16)),
+            size < required_size,
             Null,
             "Data buffer size not sufficient for initialization of cmap sub_table format 4\n"
         );
 
         /* instead of allocating 5 small chunks of memory, allocate single big one,
          * and manually allocate parts of it to different arrays. */
-        Uint16* mem = ALLOCATE (Uint16, f4->seg_count * 5);
+        Uint16* mem = ALLOCATE (Uint16, f4->seg_count * 4);
         RETURN_VALUE_IF (!mem, Null, ERR_OUT_OF_MEMORY);
 
         f4->end_code         = mem;
         f4->start_code       = mem + f4->seg_count;
-        f4->id_delta         = mem + 2 * f4->seg_count;
+        f4->id_delta         = (Int16*)(mem + 2 * f4->seg_count);
         f4->id_range_offsets = mem + 3 * f4->seg_count;
-        f4->glyph_id_array   = mem + 4 * f4->seg_count;
 
         GET_ARR_AND_ADV_U2 (f4->end_code, 0, f4->seg_count);
         f4->reserved_pad = GET_AND_ADV_U2 (data);
         GET_ARR_AND_ADV_U2 (f4->end_code, 0, f4->seg_count);
-        GET_ARR_AND_ADV_U2 (f4->id_delta, 0, f4->seg_count);
+        GET_ARR_AND_ADV_I2 (f4->id_delta, 0, f4->seg_count);
         GET_ARR_AND_ADV_U2 (f4->id_range_offsets, 0, f4->seg_count);
-        GET_ARR_AND_ADV_U2 (f4->glyph_id_array, 0, f4->seg_count);
+        size -= required_size;
+
+        Int64 remaining_size =
+            (Int64)f4->length -
+            (Int64)(SUB_TABLE_FORMAT4_DATA_SIZE /* everything before the appearance of first array */
+                    + sizeof (Uint16) /* for format */ +
+                    required_size /* all the arrays + reserved0 */);
+
+        GOTO_HANDLER_IF (
+            remaining_size < 0,
+            INIT_FAILED,
+            "Buffer overflow detected while reading cmap sub table format 4\n"
+        );
+
+        RETURN_VALUE_IF (
+            (Int64)size < remaining_size,
+            Null,
+            "Data buffer size not sufficient for initialization of cmap sub_table format 4\n"
+        );
+
+        GOTO_HANDLER_IF (
+            (remaining_size & 1) != 0,
+            INIT_FAILED,
+            "Unaligned memory found while reading cmap sub table format 4\n"
+        );
+
+        if (remaining_size) {
+            f4->num_glyph_ids  = remaining_size / sizeof (Uint16);
+            f4->glyph_id_array = ALLOCATE (Uint16, f4->num_glyph_ids);
+            GOTO_HANDLER_IF (!f4->glyph_id_array, INIT_FAILED, ERR_OUT_OF_MEMORY);
+            GET_ARR_AND_ADV_U2 (f4->glyph_id_array, 0, f4->num_glyph_ids);
+        } else {
+            f4->num_glyph_ids  = 0;
+            f4->glyph_id_array = Null;
+        }
     }
 
     return f4;
+
+INIT_FAILED:
+    sub_table_format4_deinit (f4);
+    return Null;
 }
 
 static inline XfOtfCmapSubTableFormat4* sub_table_format4_deinit (XfOtfCmapSubTableFormat4* f4) {
     RETURN_VALUE_IF (!f4, Null, ERR_INVALID_ARGUMENTS);
+
+    if (f4->glyph_id_array) {
+        FREE (f4->glyph_id_array);
+    }
 
     /* only one array is allocated and others are given offsets into
      * the large memory chunk. */
@@ -922,11 +972,16 @@ static inline XfOtfCmapSubTableFormat4* sub_table_format4_pprint (XfOtfCmapSubTa
     printf ("\tstart_code = ");
     PPRINT_ARR_U2 (f4->start_code, f4->seg_count - 1);
     printf ("\tid_delta = ");
-    PPRINT_ARR_U2 (f4->id_delta, f4->seg_count - 1);
+    PPRINT_ARR_I2 (f4->id_delta, f4->seg_count - 1);
     printf ("\tid_range_offsets = ");
     PPRINT_ARR_U2 (f4->id_range_offsets, f4->seg_count - 1);
-    printf ("\tglyph_id_array = ");
-    PPRINT_ARR_U2 (f4->glyph_id_array, f4->seg_count - 1);
+
+    printf (
+        "\tnum_glyph_ids = %u\n"
+        "\tglyph_id_array = ",
+        f4->num_glyph_ids
+    );
+    PPRINT_ARR_U2 (f4->glyph_id_array, f4->num_glyph_ids - 1);
 
     return f4;
 }
