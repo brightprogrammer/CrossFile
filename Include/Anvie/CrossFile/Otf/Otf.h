@@ -53,6 +53,6 @@ typedef struct XfOtfFile {
 
 XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename);
 XfOtfFile* xf_otf_file_close (XfOtfFile* otf_file);
-XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file);
+XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file, Uint8 identation_level);
 
 #endif // ANVIE_CROSSFILE_OTF_OTF_H

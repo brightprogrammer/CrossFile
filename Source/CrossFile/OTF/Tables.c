@@ -77,20 +77,30 @@ XfOtfTableRecord* xf_otf_table_record_init (XfOtfTableRecord* record, Uint8* dat
  * @return @c record on success.
  * @return @c Null otherwise.
  * */
-XfOtfTableRecord* xf_otf_table_record_pprint (XfOtfTableRecord* record) {
+XfOtfTableRecord* xf_otf_table_record_pprint (XfOtfTableRecord* record, Uint8 indent_level) {
     RETURN_VALUE_IF (!record, Null, ERR_INVALID_ARGUMENTS);
 
+    Char indent[indent_level + 1];
+    memset (indent, '\t', indent_level);
+    indent[indent_level] = 0;
+
     printf (
-        "OTF Table Record : \n"
-        "\ttable_tag : 0x%08x (%.*s)\n"
-        "\tchecksum : 0x%08x\n"
-        "\toffset : %u\n"
-        "\tlength : %u\n",
+        "|%.*s|OTF Table Record : \n"
+        "|%s|table_tag : 0x%08x (%.*s)\n"
+        "|%s|checksum : 0x%08x\n"
+        "|%s|offset : %u\n"
+        "|%s|length : %u\n",
+        indent_level - 1 ? indent_level - 1 : 1,
+        indent,
+        indent,
         record->table_tag,
         4, /* length of table tag string */
         (Char*)&record->table_tag,
+        indent,
         record->checksum,
+        indent,
         record->offset,
+        indent,
         record->length
     );
 
@@ -201,25 +211,36 @@ XfOtfTableRecord* xf_otf_table_dir_find_record (XfOtfTableDir* dir, XfOtfTableTa
  * @return @c record on success.
  * @return @c Null otherwise.
  * */
-XfOtfTableDir* xf_otf_table_dir_pprint (XfOtfTableDir* dir) {
+XfOtfTableDir* xf_otf_table_dir_pprint (XfOtfTableDir* dir, Uint8 indent_level) {
     RETURN_VALUE_IF (!dir, Null, ERR_INVALID_ARGUMENTS);
 
+    Char indent[indent_level + 1];
+    memset (indent, '\t', indent_level);
+    indent[indent_level] = 0;
+
     printf (
-        "OTF Table Directory : \n"
-        "\tsfnt_version : 0x%08x\n"
-        "\tnum_tables : %u\n"
-        "\tsearch_range : %u \n"
-        "\tentry_selector : %u \n"
-        "\trange_shift : %u\n",
+        "|%.*s|OTF Table Directory : \n"
+        "|%s|sfnt_version : 0x%08x\n"
+        "|%s|num_tables : %u\n"
+        "|%s|search_range : %u \n"
+        "|%s|entry_selector : %u \n"
+        "|%s|range_shift : %u\n",
+        indent_level - 1 ? indent_level - 1 : 1,
+        indent,
+        indent,
         dir->sfnt_version,
+        indent,
         dir->num_tables,
+        indent,
         dir->search_range,
+        indent,
         dir->entry_selector,
+        indent,
         dir->range_shift
     );
 
     for (Size s = 0; s < dir->num_tables; s++) {
-        xf_otf_table_record_pprint (dir->table_records + s);
+        xf_otf_table_record_pprint (dir->table_records + s, indent_level + 1);
     }
 
     return dir;

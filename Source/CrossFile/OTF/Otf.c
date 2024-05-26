@@ -133,21 +133,32 @@ XfOtfFile* xf_otf_file_close (XfOtfFile* otf_file) {
     return otf_file;
 }
 
-XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file) {
+XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file, Uint8 indent_level) {
     RETURN_VALUE_IF (!otf_file, Null, ERR_INVALID_ARGUMENTS);
 
+    /* make sure indent level is atleast 1 always */
+    indent_level = indent_level ? indent_level : 1;
+
+    Char indent[indent_level + 1];
+    memset (indent, '\t', indent_level);
+    indent[indent_level] = 0;
+
     printf (
-        "OpenType Font File : \n"
-        "\tname : %s\n"
-        "\tsize : %.2f KiB\n",
+        "|%.*s|OpenType Font File : \n"
+        "|%s|name : %s\n"
+        "|%s|size : %.2f KiB\n",
+        indent_level - 1 ? indent_level - 1 : 1,
+        indent,
+        indent,
         otf_file->file.name,
+        indent,
         otf_file->file.size / 1024.f
     );
 
-    xf_otf_table_dir_pprint (&otf_file->table_directory);
-    xf_otf_head_pprint (&otf_file->head);
-    xf_otf_maxp_pprint (&otf_file->maxp);
-    xf_otf_cmap_pprint (&otf_file->cmap);
+    xf_otf_table_dir_pprint (&otf_file->table_directory, indent_level + 1);
+    xf_otf_head_pprint (&otf_file->head, indent_level + 1);
+    xf_otf_maxp_pprint (&otf_file->maxp, indent_level + 1);
+    xf_otf_cmap_pprint (&otf_file->cmap, indent_level + 1);
 
     return otf_file;
 }

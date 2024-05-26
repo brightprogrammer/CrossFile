@@ -62,6 +62,6 @@ typedef struct XfOtfMaxp {
 #define XF_OTF_MAXP_VERSION_05_DATA_SIZE (sizeof (Uint32) + sizeof (Uint16))
 
 XfOtfMaxp* xf_otf_maxp_init (XfOtfMaxp* max_prof, Uint8* data, Size size);
-XfOtfMaxp* xf_otf_maxp_pprint (XfOtfMaxp* max_prof);
+XfOtfMaxp* xf_otf_maxp_pprint (XfOtfMaxp* max_prof, Uint8 indent_level);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_MAXP_H

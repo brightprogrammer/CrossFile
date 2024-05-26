@@ -30,17 +30,19 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * */
 
+#include <Anvie/Common.h>
+
+/* crossfile */
 #include <Anvie/CrossFile/EndiannessHelpers.h>
 #include <Anvie/CrossFile/Otf/Tables/Head.h>
 
 /* libc */
+#include <memory.h>
 #include <time.h>
 
-#include "Anvie/Common.h"
-
-static inline Char* mac_style_flag_pprint (XfOtfMacStyleFlags mac_style, Char* buf, Size size);
-static inline Char* head_flags_pprint (XfOtfHeadFlags flags, Char* buf, Size size);
-static inline Char* font_direction_hint_pprint (XfOtfFontDirectionHint hint, Char* buf, Size size);
+static inline Char* mac_style_flag_to_str (XfOtfMacStyleFlags mac_style, Char* buf, Size size);
+static inline Char* head_flags_to_str (XfOtfHeadFlags flags, Char* buf, Size size);
+static inline Char* font_direction_into_to_str (XfOtfFontDirectionHint hint, Char* buf, Size size);
 
 /**************************************************************************************************/
 /*********************************** PUBLIC METHOD DEFINITIONS ************************************/
@@ -116,8 +118,12 @@ XfOtfHead* xf_otf_head_init (XfOtfHead* head, Uint8* data, Size size) {
  * @return @c head on success.
  * @return @c Null otherwise.
  * */
-XfOtfHead* xf_otf_head_pprint (XfOtfHead* head) {
+XfOtfHead* xf_otf_head_pprint (XfOtfHead* head, Uint8 indent_level) {
     RETURN_VALUE_IF (!head, Null, ERR_INVALID_ARGUMENTS);
+
+    Char indent[indent_level + 1];
+    memset (indent, '\t', indent_level);
+    indent[indent_level] = 0;
 
     // Create a tm structure for January 1, 1904
     struct tm epoch_start = {0};
@@ -141,55 +147,75 @@ XfOtfHead* xf_otf_head_pprint (XfOtfHead* head) {
     strftime (modified_time_buf, sizeof (modified_time_buf), "%Y-%m-%d %H:%M:%S", modified_tm);
 
     Char mac_style_pprinted_buf[80] = {0};
-    mac_style_flag_pprint (head->mac_style, mac_style_pprinted_buf, sizeof mac_style_pprinted_buf);
+    mac_style_flag_to_str (head->mac_style, mac_style_pprinted_buf, sizeof mac_style_pprinted_buf);
 
     Char head_flags_pprinted_buf[300] = {0};
-    head_flags_pprint (head->flags, head_flags_pprinted_buf, sizeof head_flags_pprinted_buf);
+    head_flags_to_str (head->flags, head_flags_pprinted_buf, sizeof head_flags_pprinted_buf);
 
     Char font_direction_hint_pprinted_buf[21] = {0};
-    font_direction_hint_pprint (
+    font_direction_into_to_str (
         head->font_direction_hint,
         font_direction_hint_pprinted_buf,
         sizeof font_direction_hint_pprinted_buf
     );
 
     printf (
-        "OTF Font Header Table : \n"
-        "\tmajor_version = %u\n"
-        "\tminor_version = %u\n"
-        "\tfont_revision = %u\n"
-        "\tchecksum_adjustment = 0x%08x\n"
-        "\tmagic_number = 0x%08x\n"
-        "\tflags = %s\n"
-        "\tunits_per_em = %u\n"
-        "\tcreated = %s\n"
-        "\tmodified = %s\n"
-        "\tx_min = %d\n"
-        "\ty_min = %d\n"
-        "\tx_max = %d\n"
-        "\ty_max = %d\n"
-        "\tmac_style = %s\n"
-        "\tlowest_rec_ppem = %u\n"
-        "\tfont_direction_hint = %s\n"
-        "\tindex_to_loc_format = %s\n"
-        "\tglyph_data_format = %s\n",
+        "|%.*s|OTF Font Header Table : \n"
+        "|%s|major_version = %u\n"
+        "|%s|minor_version = %u\n"
+        "|%s|font_revision = %u\n"
+        "|%s|checksum_adjustment = 0x%08x\n"
+        "|%s|magic_number = 0x%08x\n"
+        "|%s|flags = %s\n"
+        "|%s|units_per_em = %u\n"
+        "|%s|created = %s\n"
+        "|%s|modified = %s\n"
+        "|%s|x_min = %d\n"
+        "|%s|y_min = %d\n"
+        "|%s|x_max = %d\n"
+        "|%s|y_max = %d\n"
+        "|%s|mac_style = %s\n"
+        "|%s|lowest_rec_ppem = %u\n"
+        "|%s|font_direction_hint = %s\n"
+        "|%s|index_to_loc_format = %s\n"
+        "|%s|glyph_data_format = %s\n",
+        indent_level - 1 ? indent_level - 1 : 1,
+        indent,
+        indent,
         head->major_version,
+        indent,
         head->minor_version,
+        indent,
         head->font_revision,
+        indent,
         head->checksum_adjustment,
+        indent,
         head->magic_number,
+        indent,
         head_flags_pprinted_buf,
+        indent,
         head->units_per_em,
+        indent,
         created_time_buf,
+        indent,
         modified_time_buf,
+        indent,
         head->x_min,
+        indent,
         head->y_min,
+        indent,
         head->x_max,
+        indent,
         head->y_max,
+        indent,
         mac_style_pprinted_buf,
+        indent,
         head->lowest_rec_ppem,
+        indent,
         font_direction_hint_pprinted_buf,
+        indent,
         head->index_to_loc_format ? "LONG" : "SHORT",
+        indent,
         head->glyph_data_format ? "UNKNOWN" : "CURRENT"
     );
 
@@ -210,7 +236,7 @@ XfOtfHead* xf_otf_head_pprint (XfOtfHead* head) {
  * @return @c buf on success.
  * @return @c Null otherwise.
  * */
-static inline Char* mac_style_flag_pprint (XfOtfMacStyleFlags mac_style, Char* buf, Size size) {
+static inline Char* mac_style_flag_to_str (XfOtfMacStyleFlags mac_style, Char* buf, Size size) {
     RETURN_VALUE_IF (!buf || !size, Null, ERR_INVALID_ARGUMENTS);
 
     Bool add_pipe = False;
@@ -249,7 +275,7 @@ static inline Char* mac_style_flag_pprint (XfOtfMacStyleFlags mac_style, Char* b
  * @return @c buf on success.
  * @return @c Null otherwise.
  * */
-static inline Char* head_flags_pprint (XfOtfHeadFlags flags, Char* buf, Size size) {
+static inline Char* head_flags_to_str (XfOtfHeadFlags flags, Char* buf, Size size) {
     RETURN_VALUE_IF (!buf || !size, Null, ERR_INVALID_ARGUMENTS);
 
     Bool add_pipe = False;
@@ -291,7 +317,7 @@ static inline Char* head_flags_pprint (XfOtfHeadFlags flags, Char* buf, Size siz
  * @return @c buf on success.
  * @return @c Null otherwise.
  * */
-static inline Char* font_direction_hint_pprint (XfOtfFontDirectionHint hint, Char* buf, Size size) {
+static inline Char* font_direction_into_to_str (XfOtfFontDirectionHint hint, Char* buf, Size size) {
     RETURN_VALUE_IF (!buf || !size, Null, ERR_INVALID_ARGUMENTS);
 
 #define XF_OTF_PPRINT_FLAG(name)                                                                   \

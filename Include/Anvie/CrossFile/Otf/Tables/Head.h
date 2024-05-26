@@ -108,6 +108,6 @@ typedef struct XfOtfHead {
      sizeof (XfOtfFontDirectionHint) + sizeof (Int16) * 2)
 
 XfOtfHead* xf_otf_head_init (XfOtfHead* head, Uint8* data, Size size);
-XfOtfHead* xf_otf_head_pprint (XfOtfHead* head);
+XfOtfHead* xf_otf_head_pprint (XfOtfHead* head, Uint8 indent_level);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_HEAD_H

@@ -105,8 +105,10 @@ typedef struct XfOtfCmapSubTableFormat2 {
     Uint16              length;
     Uint16              language;
     Uint16              sub_header_keys[256];
-    XfOtfCmapSubHeader* sub_headers;
-    Uint16*             glyph_id_array;
+    Uint16              num_sub_headers; /**< Computed value, not present in binary. */
+    XfOtfCmapSubHeader* sub_headers;     /**< This is an arbitrary sized array acc to spec. */
+    Uint16              num_glyph_ids;   /**< Computed value, not present in binary. */
+    Uint16*             glyph_id_array;  /**< This is an arbitrary sized array acc to spec. */
 } XfOtfCmapSubTableFormat2;
 
 typedef struct XfOtfCmapSubTableFormat4 {
@@ -119,9 +121,9 @@ typedef struct XfOtfCmapSubTableFormat4 {
     Uint16* end_code;
     Uint16  reserved_pad;
     Uint16* start_code;
-    Int16* id_delta;
+    Int16*  id_delta;
     Uint16* id_range_offsets;
-    Uint16  num_glyph_ids; /**< @b computed value, not present in binary */
+    Uint16  num_glyph_ids;  /**< @b Computed value, not present in binary */
     Uint16* glyph_id_array; /**< @b This is an arbitrary sized array acc to spec. */
 } XfOtfCmapSubTableFormat4;
 
@@ -343,6 +345,6 @@ typedef struct XfOtfCmap {
 
 XfOtfCmap* xf_otf_cmap_init (XfOtfCmap* cmap, Uint8* data, Size size);
 XfOtfCmap* xf_otf_cmap_deinit (XfOtfCmap* cmap);
-XfOtfCmap* xf_otf_cmap_pprint (XfOtfCmap* cmap);
+XfOtfCmap* xf_otf_cmap_pprint (XfOtfCmap* cmap, Uint8 indent_level);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_CMAP_H

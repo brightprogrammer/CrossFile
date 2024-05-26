@@ -36,6 +36,9 @@
 #include <Anvie/CrossFile/EndiannessHelpers.h>
 #include <Anvie/CrossFile/Otf/Tables/Maxp.h>
 
+/* libc */
+#include <memory.h>
+
 #define MAXP_VERSION_10 0x00010000
 #define MAXP_VERSION_05 0x00005000
 
@@ -83,51 +86,76 @@ XfOtfMaxp* xf_otf_maxp_init (XfOtfMaxp* max_prof, Uint8* data, Size size) {
     return max_prof;
 }
 
-XfOtfMaxp* xf_otf_maxp_pprint (XfOtfMaxp* max_prof) {
+XfOtfMaxp* xf_otf_maxp_pprint (XfOtfMaxp* max_prof, Uint8 indent_level) {
     RETURN_VALUE_IF (!max_prof, Null, ERR_INVALID_ARGUMENTS);
+
+    Char indent[indent_level + 1];
+    memset (indent, '\t', indent_level);
+    indent[indent_level] = 0;
 
     if (max_prof->version == MAXP_VERSION_10) {
         printf (
-            "OTF Maximum Profile :\n"
-            "\tversion = %08x (%s)\n"
-            "\tnum_glyphs = %u\n"
-            "\tmax_points = %u\n"
-            "\tmax_contours = %u\n"
-            "\tmax_composite_points = %u\n"
-            "\tmax_composite_contours = %u\n"
-            "\tmax_zones = %u\n"
-            "\tmax_twilight_points = %u\n"
-            "\tmax_storage = %u\n"
-            "\tmax_function_defs = %u\n"
-            "\tmax_instruction_defs = %u\n"
-            "\tmax_stack_elements = %u\n"
-            "\tmax_size_of_instructions = %u\n"
-            "\tmax_component_elements = %u\n"
-            "\tmax_component_depth = %u\n",
+            "|%.*s|OTF Maximum Profile :\n"
+            "|%s|version = %08x (%s)\n"
+            "|%s|num_glyphs = %u\n"
+            "|%s|max_points = %u\n"
+            "|%s|max_contours = %u\n"
+            "|%s|max_composite_points = %u\n"
+            "|%s|max_composite_contours = %u\n"
+            "|%s|max_zones = %u\n"
+            "|%s|max_twilight_points = %u\n"
+            "|%s|max_storage = %u\n"
+            "|%s|max_function_defs = %u\n"
+            "|%s|max_instruction_defs = %u\n"
+            "|%s|max_stack_elements = %u\n"
+            "|%s|max_size_of_instructions = %u\n"
+            "|%s|max_component_elements = %u\n"
+            "|%s|max_component_depth = %u\n",
+            indent_level - 1 ? indent_level - 1 : 1,
+            indent,
+            indent,
             max_prof->version,
             "Version 1.0 (TTF)",
+            indent,
             max_prof->num_glyphs,
+            indent,
             max_prof->max_points,
+            indent,
             max_prof->max_contours,
+            indent,
             max_prof->max_composite_points,
+            indent,
             max_prof->max_composite_contours,
+            indent,
             max_prof->max_zones,
+            indent,
             max_prof->max_twilight_points,
+            indent,
             max_prof->max_storage,
+            indent,
             max_prof->max_function_defs,
+            indent,
             max_prof->max_instruction_defs,
+            indent,
             max_prof->max_stack_elements,
+            indent,
             max_prof->max_size_of_instructions,
+            indent,
             max_prof->max_component_elements,
+            indent,
             max_prof->max_component_depth
         );
     } else if (max_prof->version == MAXP_VERSION_05) {
         printf (
-            "OTF Maximum Profile :\n"
-            "\tversion = %08x (%s)\n"
-            "\tnum_glyphs = %u\n",
+            "|%.*s|OTF Maximum Profile :\n"
+            "|%s|version = %08x (%s)\n"
+            "|%s|num_glyphs = %u\n",
+            indent_level - 1 ? indent_level - 1 : 1,
+            indent,
+            indent,
             max_prof->version,
             "Version 0.5 (CFF/CFF2)",
+            indent,
             max_prof->num_glyphs
         );
     } else {
