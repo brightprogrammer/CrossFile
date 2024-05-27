@@ -141,7 +141,7 @@ static inline XfOtfCmapSubTable*
     sub_table_pprint (XfOtfCmapSubTable* sub_table, Uint8 indent_level);
 
 /* size limit definitions for error checking */
-#define ENCODING_RECORD_DATA_SIZE       (sizeof (XfOtfCmapPlatformId) + sizeof (Uint16) + sizeof (Uint32))
+#define ENCODING_RECORD_DATA_SIZE       (sizeof (XfOtfPlatformId) + sizeof (Uint16) + sizeof (Uint32))
 #define CMAP_DATA_SIZE                  (sizeof (Uint16) * 2)
 #define SUB_HEADER_DATA_SIZE            (sizeof (Uint16) * 3 + sizeof (Int16))
 #define MAP_GROUP_DATA_SIZE             (sizeof (Uint32) * 3)
@@ -334,8 +334,8 @@ static inline XfOtfCmapEncodingRecord*
         "Data buffer size not sufficient to initialize encoding record.\n"
     );
 
-    enc->platform_id        = GET_AND_ADV_U2 (data);
-    enc->encoding_id.custom = GET_AND_ADV_U2 (data);
+    enc->platform_encoding.platform_id        = GET_AND_ADV_U2 (data);
+    enc->platform_encoding.encoding_id.custom = GET_AND_ADV_U2 (data);
     enc->sub_table_offset   = GET_AND_ADV_U4 (data);
 
     return enc;
@@ -373,145 +373,22 @@ static inline XfOtfCmapEncodingRecord*
     memset (indent, '\t', indent_level);
     indent[indent_level] = 0;
 
-    static const CString platform_id_to_str_map[] = {
-        "VARIOUS",
-        "MAC",
-        "ISO",
-        "WIN",
-        "CUSTOM",
-    };
-
-    static const CString enc_various_to_str_map[] = {
-        "Unicode 1.0",
-        "Unicode 1.1",
-        "ISO/IEC 10646",
-        "Unicode 2.0+ (BMP only)",
-        "Unicode 2.0+ (Full repertoire)",
-        "Unicode Variation Sequences",
-        "Unicode full repertoire"
-    };
-    static const CString enc_iso_to_str_map[] = {"7-bit ASCII", "ISO 10646\0", "ISO 8859-1\0"};
-    static const CString enc_win_to_str_map[] = {
-        "Symbol",
-        "Unicode BMP",
-        "ShiftJIS",
-        "PRC",
-        "Big5",
-        "Wansung",
-        "Johab",
-        "Reserved",
-        "Reserved",
-        "Reserved",
-        "Unicode full repertoire"
-    };
-    static CString enc_mac_to_str_map[] = {
-        "Roman",
-        "Japanese",
-        "Chinese (Traditional)",
-        "Korean",
-        "Arabic",
-        "Hebrew",
-        "Greek",
-        "Russian",
-        "RSymbol",
-        "Devanagari",
-        "Gurmukhi",
-        "Gujarati",
-        "Odia",
-        "Bangla",
-        "Tamil",
-        "Telugu",
-        "Kannada",
-        "Malayalam",
-        "Sinhalese",
-        "Burmese",
-        "Khmer",
-        "Thai",
-        "Laotian",
-        "Georgian",
-        "Armenian",
-        "Chinese (Simplified)",
-        "Tibetan",
-        "Mongolian",
-        "Geez",
-        "Slavic",
-        "Vietnamese",
-        "Sindhi",
-        "Uninterpreted"
-    };
-
-    if (enc->platform_id <= XF_OTF_CMAP_PLATFORM_ID_MAX) {
-        CString encoding_format_str = Null;
-        switch (enc->platform_id) {
-            case XF_OTF_CMAP_PLATFORM_ID_VARIOUS : {
-                if (enc->encoding_id.various <= XF_OTF_CMAP_VARIOUS_ENCODING_ID_MAX) {
-                    encoding_format_str = enc_various_to_str_map[enc->encoding_id.various];
-                } else {
-                    encoding_format_str = "Unknown";
-                }
-                break;
-            }
-            case XF_OTF_CMAP_PLATFORM_ID_MAC : {
-                if (enc->encoding_id.mac <= XF_OTF_CMAP_MAC_ENCODING_ID_MAX) {
-                    encoding_format_str = enc_mac_to_str_map[enc->encoding_id.mac];
-                } else {
-                    encoding_format_str = "Unknown";
-                }
-                break;
-            }
-            case XF_OTF_CMAP_PLATFORM_ID_ISO : {
-                if (enc->encoding_id.iso <= XF_OTF_CMAP_ISO_ENCODING_ID_MAX) {
-                    encoding_format_str = enc_iso_to_str_map[enc->encoding_id.iso];
-                } else {
-                    encoding_format_str = "Unknown";
-                }
-                break;
-            }
-            case XF_OTF_CMAP_PLATFORM_ID_WIN : {
-                if (enc->encoding_id.win <= XF_OTF_CMAP_WIN_ENCODING_ID_MAX) {
-                    encoding_format_str = enc_win_to_str_map[enc->encoding_id.win];
-                } else {
-                    encoding_format_str = "Unknown";
-                }
-                break;
-            }
-            case XF_OTF_CMAP_PLATFORM_ID_CUSTOM :
-                encoding_format_str = "Custom";
-                break;
-        }
-
-        printf (
-            "|%.*s|OTF Char To Glyph Map Encoding Format :\n"
-            "|%s|platform_id = %x (%s)\n"
-            "|%s|encoding_id = %x (%s)\n"
-            "|%s|sub_table_offset = %08x\n",
-            indent_level - 1 ? indent_level - 1 : 1,
-            indent,
-            indent,
-            enc->platform_id,
-            platform_id_to_str_map[enc->platform_id],
-            indent,
-            enc->encoding_id.custom,
-            encoding_format_str,
-            indent,
-            enc->sub_table_offset
-        );
-    } else {
-        printf (
-            "|%.*s|OTF Char To Glyph Map Encoding Format :\n"
-            "|%s|platform_id = %x (Unknown)\n"
-            "|%s|encoding_id = %x (Unknown)\n"
-            "|%s|sub_table_offset = %08x\n",
-            indent_level - 1 ? indent_level - 1 : 1,
-            indent,
-            indent,
-            enc->platform_id,
-            indent,
-            enc->encoding_id.custom,
-            indent,
-            enc->sub_table_offset
-        );
-    }
+    printf (
+        "|%.*s|OTF Char To Glyph Map Encoding Format :\n"
+        "|%s|platform_id = %x (%s)\n"
+        "|%s|encoding_id = %x (%s)\n"
+        "|%s|sub_table_offset = %08x\n",
+        indent_level - 1 ? indent_level - 1 : 1,
+        indent,
+        indent,
+        enc->platform_encoding.platform_id,
+        xf_otf_platform_encoding_get_platform_str (enc->platform_encoding),
+        indent,
+        enc->platform_encoding.encoding_id.custom,
+        xf_otf_platform_encoding_get_encoding_str (enc->platform_encoding),
+        indent,
+        enc->sub_table_offset
+    );
 
     sub_table_pprint (&enc->sub_table, indent_level + 1);
 

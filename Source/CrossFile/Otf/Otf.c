@@ -102,9 +102,22 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
             }
 
             case XF_OTF_TABLE_TAG_HMTX : {
-                PRINT_ERR ("hmtx FOUND\n");
                 hmtx_data      = otf_file->file.data + record->offset;
                 hmtx_data_size = record->length;
+                break;
+            }
+
+            case XF_OTF_TABLE_TAG_NAME : {
+                GOTO_HANDLER_IF (
+                    !xf_otf_name_init (
+                        &otf_file->name,
+                        otf_file->file.data + record->offset,
+                        record->length
+                    ),
+                    INIT_FAILED,
+                    "Failed to initialize name table \"maxp\".\n"
+                );
+                found_required_records_count++;
                 break;
             }
 
@@ -152,7 +165,7 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
 
     /* check whether we've found all required records */
     GOTO_HANDLER_IF (
-        found_required_records_count != 5,
+        found_required_records_count != 6,
         INIT_FAILED,
         "Failed to find some of the required table records.\n"
     );
@@ -167,6 +180,7 @@ INIT_FAILED:
 XfOtfFile* xf_otf_file_close (XfOtfFile* otf_file) {
     RETURN_VALUE_IF (!otf_file, Null, ERR_INVALID_ARGUMENTS);
 
+    xf_otf_name_deinit (&otf_file->name);
     xf_otf_hmtx_deinit (&otf_file->hmtx);
     xf_otf_cmap_deinit (&otf_file->cmap);
 
@@ -208,6 +222,7 @@ XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file, Uint8 indent_level) {
     xf_otf_head_pprint (&otf_file->head, indent_level + 1);
     xf_otf_hhea_pprint (&otf_file->hhea, indent_level + 1);
     xf_otf_hmtx_pprint (&otf_file->hmtx, indent_level + 1);
+    xf_otf_name_pprint (&otf_file->name, indent_level + 1);
     xf_otf_maxp_pprint (&otf_file->maxp, indent_level + 1);
 
     return otf_file;

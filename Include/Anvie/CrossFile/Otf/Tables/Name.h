@@ -1,6 +1,6 @@
 /**
- * @file Otf.h
- * @date Wed, 22nd May 2024
+ * @file Name.h
+ * @date Sun, 26th May 2024
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright 2024 Siddharth Mishra
  * @copyright Copyright 2024 Anvie Labs
@@ -30,32 +30,46 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * */
 
-#ifndef ANVIE_CROSSFILE_OTF_OTF_H
-#define ANVIE_CROSSFILE_OTF_OTF_H
+#ifndef ANVIE_CROSSFILE_OTF_TABLES_NAME_H
+#define ANVIE_CROSSFILE_OTF_TABLES_NAME_H
 
-#include <Anvie/Common.h>
 #include <Anvie/Types.h>
 
 /* crossfile */
-#include <Anvie/CrossFile/File.h>
-#include <Anvie/CrossFile/Otf/Tables.h>
+#include <Anvie/CrossFile/Otf/Tables/Common.h>
 
-typedef struct XfOtfFile {
-    XfFile        file;
-    XfOtfTableDir table_directory;
+/* REF : https://learn.microsoft.com/en-us/typography/opentype/spec/name */
 
-    /* data from table records */
-    XfOtfCmap cmap;
-    XfOtfHead head;
-    XfOtfHhea hhea;
-    XfOtfHmtx hmtx;
-    XfOtfName name; 
-    XfOtfMaxp maxp;
-    XfOtfLoca loca;
-} XfOtfFile;
+typedef struct XfOtfNameRecord {
+    XfOtfPlatformEncoding platform_encoding;
+    Uint16 language_id;
+    Uint16 name_id;
+    Uint16 length;
+    Uint16 string_offset;
+} XfOtfNameRecord;
 
-XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename);
-XfOtfFile* xf_otf_file_close (XfOtfFile* otf_file);
-XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file, Uint8 identation_level);
+typedef struct XfOtfLangTagRecord {
+    Uint16 length;
+    Uint16 lang_tag_offset;
+} XfOtfLangTagRecord;
 
-#endif // ANVIE_CROSSFILE_OTF_OTF_H
+/**
+ * @b A mix of Name V0 and V1. Based on the version information,
+ * fields are loaded.
+ * */
+typedef struct XfOtfName {
+    Uint16              version;          /* v0, v1 */
+    Uint16              num_name_records; /* v0, v1 */
+    Uint16              storage_offset;   /* v0, v1 */
+    XfOtfNameRecord    *name_records;     /* v0, v1 */
+    Uint16              num_lang_tags;    /* v1 */
+    XfOtfLangTagRecord *lang_tags;        /* v1 */
+    Uint16              string_data_size;
+    Char               *string_data;      /* v0, v1 */
+} XfOtfName;
+
+XfOtfName *xf_otf_name_init (XfOtfName *name, Uint8 *data, Size size);
+XfOtfName *xf_otf_name_deinit (XfOtfName *name);
+XfOtfName *xf_otf_name_pprint (XfOtfName *name, Uint8 indent_level);
+
+#endif // ANVIE_CROSSFILE_OTF_TABLES_NAME_H

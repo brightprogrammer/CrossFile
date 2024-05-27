@@ -38,6 +38,7 @@
 #include <Anvie/CrossFile/Otf/Tables/Hhea.h>
 #include <Anvie/CrossFile/Otf/Tables/Hmtx.h>
 #include <Anvie/CrossFile/Otf/Tables/Loca.h>
+#include <Anvie/CrossFile/Otf/Tables/Name.h>
 #include <Anvie/CrossFile/Otf/Tables/Maxp.h>
 
 /**
