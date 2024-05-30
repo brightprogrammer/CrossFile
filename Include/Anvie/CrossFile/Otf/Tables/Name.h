@@ -38,14 +38,47 @@
 /* crossfile */
 #include <Anvie/CrossFile/Otf/Tables/Common.h>
 
+typedef enum XfOtfNameId : Uint16 {
+    XF_OTF_NAME_ID_MIN                               = 0,
+    XF_OTF_NAME_ID_COPYRIGHT_NOTICE                  = 0,
+    XF_OTF_NAME_ID_FONT_FAMILY_NAME                  = 1,
+    XF_OTF_NAME_ID_FONT_SUBFAMILY_NAME               = 2,
+    XF_OTF_NAME_ID_UNIQUE_FONT_IDENTIFIER            = 3,
+    XF_OTF_NAME_ID_FULL_FONT_FAMILY_NAME             = 4,
+    XF_OTF_NAME_ID_VERSION_STRING                    = 5,
+    XF_OTF_NAME_ID_POSTSCRIPT_NAME                   = 6,
+    XF_OTF_NAME_ID_TRADEMARK                         = 7,
+    XF_OTF_NAME_ID_MANUFACTURER_NAME                 = 8,
+    XF_OTF_NAME_ID_DESIGNER_NAME                     = 9,
+    XF_OTF_NAME_ID_DESCRIPTION                       = 10,
+    XF_OTF_NAME_ID_VENDOR_URL                        = 11,
+    XF_OTF_NAME_ID_DESIGNER_URL                      = 12,
+    XF_OTF_NAME_ID_LICENSE                           = 13,
+    XF_OTF_NAME_ID_LICENSE_URL                       = 14,
+    XF_OTF_NAME_ID_RESERVED0                         = 15,
+    XF_OTF_NAME_ID_TYPOGRAPHIC_FAMILY_NAME           = 16,
+    XF_OTF_NAME_ID_TYPOGRAPHIC_SUBFAMILY_NAME        = 17,
+    XF_OTF_NAME_ID_MAC_COMPATIBLE_FULL               = 18,
+    XF_OTF_NAME_ID_SAMPLE_TEXT                       = 19,
+    XF_OTF_NAME_ID_POSTSCRIPT_CID_FONT_NAME          = 20,
+    XF_OTF_NAME_ID_WWS_FAMILY_NAME                   = 21,
+    XF_OTF_NAME_ID_WWS_SUBFAMILY_NAME                = 22,
+    XF_OTF_NAME_ID_LIGHT_BACKGROUND_PALETTE          = 23,
+    XF_OTF_NAME_ID_DARK_BACKGROUND_PALETTE           = 24,
+    XF_OTF_NAME_ID_VARIATIONS_POSTSCRIPT_NAME_PREFIX = 25,
+    XF_OTF_NAME_ID_MAX                               = 25,
+    XF_OTF_NAME_ID_RESERVED_MIN                      = 26,
+    XF_OTF_NAME_ID_RESERVED_MAX                      = 0xffff
+} XfOtfNameId;
+
 /* REF : https://learn.microsoft.com/en-us/typography/opentype/spec/name */
 
 typedef struct XfOtfNameRecord {
     XfOtfPlatformEncoding platform_encoding;
-    Uint16 language_id;
-    Uint16 name_id;
-    Uint16 length;
-    Uint16 string_offset;
+    XfOtfLanguage         language;
+    XfOtfNameId           name_id;
+    Uint16                length;
+    Uint16                string_offset;
 } XfOtfNameRecord;
 
 typedef struct XfOtfLangTagRecord {

@@ -141,7 +141,7 @@ static inline XfOtfCmapSubTable*
     sub_table_pprint (XfOtfCmapSubTable* sub_table, Uint8 indent_level);
 
 /* size limit definitions for error checking */
-#define ENCODING_RECORD_DATA_SIZE       (sizeof (XfOtfPlatformId) + sizeof (Uint16) + sizeof (Uint32))
+#define ENCODING_RECORD_DATA_SIZE       (sizeof (XfOtfPlatform) + sizeof (Uint16) + sizeof (Uint32))
 #define CMAP_DATA_SIZE                  (sizeof (Uint16) * 2)
 #define SUB_HEADER_DATA_SIZE            (sizeof (Uint16) * 3 + sizeof (Int16))
 #define MAP_GROUP_DATA_SIZE             (sizeof (Uint32) * 3)
@@ -334,9 +334,9 @@ static inline XfOtfCmapEncodingRecord*
         "Data buffer size not sufficient to initialize encoding record.\n"
     );
 
-    enc->platform_encoding.platform_id        = GET_AND_ADV_U2 (data);
-    enc->platform_encoding.encoding_id.custom = GET_AND_ADV_U2 (data);
-    enc->sub_table_offset   = GET_AND_ADV_U4 (data);
+    enc->platform_encoding.platform        = GET_AND_ADV_U2 (data);
+    enc->platform_encoding.encoding.custom = GET_AND_ADV_U2 (data);
+    enc->sub_table_offset                  = GET_AND_ADV_U4 (data);
 
     return enc;
 }
@@ -381,10 +381,10 @@ static inline XfOtfCmapEncodingRecord*
         indent_level - 1 ? indent_level - 1 : 1,
         indent,
         indent,
-        enc->platform_encoding.platform_id,
+        enc->platform_encoding.platform,
         xf_otf_platform_encoding_get_platform_str (enc->platform_encoding),
         indent,
-        enc->platform_encoding.encoding_id.custom,
+        enc->platform_encoding.encoding.custom,
         xf_otf_platform_encoding_get_encoding_str (enc->platform_encoding),
         indent,
         enc->sub_table_offset

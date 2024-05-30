@@ -39,9 +39,15 @@
 /* libc */
 #include <memory.h>
 
-#define NAME_RECORD_DATA_SIZE     (sizeof (Uint16) * 6)
+#include "Anvie/CrossFile/Otf/Tables/Common.h"
+
+#define NAME_RECORD_DATA_SIZE                                                                      \
+    (XF_OTF_PLATFORM_ENCODING_DATA_SIZE + XF_OTF_LANGUAGE_DATA_SIZE + sizeof (XfOtfNameId) +       \
+     sizeof (Uint16) * 2)
 #define LANG_TAG_RECORD_DATA_SIZE (sizeof (Uint16) * 2)
 #define NAME_DATA_SIZE            (sizeof (Uint16) * 3)
+
+static inline CString name_id_to_str (XfOtfNameId name_id);
 
 static inline XfOtfNameRecord *name_record_init (XfOtfNameRecord *record, Uint8 *data, Size size);
 static inline XfOtfNameRecord *name_record_pprint (XfOtfNameRecord *record, Uint8 indent_level);
@@ -275,12 +281,15 @@ static inline XfOtfNameRecord *name_record_init (XfOtfNameRecord *record, Uint8 
         "Data buffer size not sufficient to initialize name record\n"
     );
 
-    record->platform_encoding.platform_id        = GET_AND_ADV_U2 (data);
-    record->platform_encoding.encoding_id.custom = GET_AND_ADV_U2 (data);
-    record->language_id                          = GET_AND_ADV_U2 (data);
-    record->name_id                              = GET_AND_ADV_U2 (data);
-    record->length                               = GET_AND_ADV_U2 (data);
-    record->string_offset                        = GET_AND_ADV_U2 (data);
+    record->platform_encoding.platform        = GET_AND_ADV_U2 (data);
+    record->platform_encoding.encoding.custom = GET_AND_ADV_U2 (data);
+
+    record->language.language.custom = GET_AND_ADV_U2 (data);
+    record->language.platform        = record->platform_encoding.platform;
+
+    record->name_id       = GET_AND_ADV_U2 (data);
+    record->length        = GET_AND_ADV_U2 (data);
+    record->string_offset = GET_AND_ADV_U2 (data);
 
     return record;
 }
@@ -294,24 +303,26 @@ static inline XfOtfNameRecord *name_record_pprint (XfOtfNameRecord *record, Uint
 
     printf (
         "|%.*s|OTF Name Record :\n"
-        "|%s|platform_id = %x (%s)\n"
+        "|%s|platform = %x (%s)\n"
         "|%s|encoding_id = %x (%s)\n"
-        "|%s|language_id = %u\n"
-        "|%s|name_id = %u\n"
+        "|%s|language = %x (%s)\n"
+        "|%s|name_id = %u (%s)\n"
         "|%s|length = %u\n"
         "|%s|string_offset = %u\n",
         indent_level - 1 ? indent_level - 1 : 1,
         indent,
         indent,
-        record->platform_encoding.platform_id,
+        record->platform_encoding.platform,
         xf_otf_platform_encoding_get_platform_str (record->platform_encoding),
         indent,
-        record->platform_encoding.encoding_id.custom,
+        record->platform_encoding.encoding.custom,
         xf_otf_platform_encoding_get_encoding_str (record->platform_encoding),
         indent,
-        record->language_id,
+        record->language.language.custom,
+        xf_otf_language_to_str (record->language),
         indent,
         record->name_id,
+        name_id_to_str (record->name_id),
         indent,
         record->length,
         indent,
@@ -336,6 +347,7 @@ static inline XfOtfLangTagRecord *
 
     return tag;
 }
+
 static inline XfOtfLangTagRecord *
     lang_tag_record_pprint (XfOtfLangTagRecord *tag, Uint8 indent_level) {
     RETURN_VALUE_IF (!tag, Null, ERR_INVALID_ARGUMENTS);
@@ -357,4 +369,44 @@ static inline XfOtfLangTagRecord *
     );
 
     return tag;
+}
+
+static inline CString name_id_to_str (XfOtfNameId id) {
+    // Array of name ids corresponding to the enum values
+    static const char *names[] = {
+        "COPYRIGHT NOTICE",                 // 0
+        "FONT FAMILY NAME",                 // 1
+        "FONT SUBFAMILY NAME",              // 2
+        "UNIQUE FONT IDENTIFIER",           // 3
+        "FULL FONT FAMILY NAME",            // 4
+        "VERSION STRING",                   // 5
+        "POSTSCRIPT NAME",                  // 6
+        "TRADEMARK",                        // 7
+        "MANUFACTURER NAME",                // 8
+        "DESIGNER NAME",                    // 9
+        "DESCRIPTION",                      // 10
+        "VENDOR URL",                       // 11
+        "DESIGNER URL",                     // 12
+        "LICENSE",                          // 13
+        "LICENSE URL",                      // 14
+        "RESERVED0",                        // 15
+        "TYPOGRAPHIC FAMILY NAME",          // 16
+        "TYPOGRAPHIC SUBFAMILY NAME",       // 17
+        "MAC COMPATIBLE FULL",              // 18
+        "SAMPLE TEXT",                      // 19
+        "POSTSCRIPT CID FONT NAME",         // 20
+        "WWS FAMILY NAME",                  // 21
+        "WWS SUBFAMILY NAME",               // 22
+        "LIGHT BACKGROUND PALETTE",         // 23
+        "DARK BACKGROUND PALETTE",          // 24
+        "VARIATIONS POSTSCRIPT NAME PREFIX" // 25
+    };
+
+    // Check if the value is within the reserved range
+    if (id >= XF_OTF_NAME_ID_RESERVED_MIN) {
+        return "RESERVED";
+    }
+
+    // Return the corresponding string from the array
+    return names[id];
 }
