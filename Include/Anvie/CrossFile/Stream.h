@@ -57,11 +57,26 @@ typedef struct XfStructDesc XfStructDesc;
  * */
 typedef struct XfDataStream XfDataStream;
 
-typedef enum XfByteOrder : Uint8 {
+/**
+ * This is a trick employed to detect host endianness from it's definition.
+ * REF : https://stackoverflow.com/a/2103095
+ * */
+typedef enum XfByteOrder {
     XF_BYTE_ORDER_UNKNOWN = 0,
-    XF_BYTE_ORDER_MSB, /**< @b Big Endian or most significant byte first. */
-    XF_BYTE_ORDER_LSB  /**< @b Little Endian or least significant byte first. */
+    XF_BYTE_ORDER_MSB     = 0x00010203, /**< @b Big Endian or most significant byte first. */
+    XF_BYTE_ORDER_LSB     = 0x03020100  /**< @b Little Endian or least significant byte first. */
 } XfByteOrder;
+
+static const union {
+    unsigned char bytes[4];
+    XfByteOrder   value;
+} __host_order__trickster__ = {
+    {0, 1, 2, 3}
+};
+
+#define XF_HOST_BYTE_ORDER        (__host_order__trickster__.value)
+#define XF_HOST_BYTE_ORDER_IS_MSB (XF_HOST_BYTE_ORDER == XF_BYTE_ORDER_MSB)
+#define XF_HOST_BYTE_ORDER_IS_LSB (XF_HOST_BYTE_ORDER == XF_BYTE_ORDER_LSB)
 
 XfDataStream* xf_data_stream_open_file (CString filename, XfByteOrder order);
 void          xf_data_stream_close (XfDataStream* stream);

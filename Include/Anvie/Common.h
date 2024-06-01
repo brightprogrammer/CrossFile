@@ -180,22 +180,19 @@
 
 /********************************* ENDIANNESS CONVERSION MACROS ***********************************/
 
-#define LE2BE_U2(x) ((Uint16)((((x) & 0x00ff) << 8) | (((x) & 0xff00) >> 8)))
-#define LE2BE_U4(x) ((Uint32)LE2BE_U2 ((x) & 0xffff) << 16 | (LE2BE_U2 (((x) >> 16) & 0xffff)))
-#define LE2BE_U8(x)                                                                                \
-    ((Uint64)LE2BE_U4 ((x) & 0xffffffff) << 32 | ((Uint64)LE2BE_U4 (((x) >> 32) & 0xffffffff)))
+#define INVERT_BYTE_ORDER_U8(x)  (Uint8) (x)
+#define INVERT_BYTE_ORDER_U16(x) ((Uint16)((((x) & 0x00ff) << 8) | (((x) & 0xff00) >> 8)))
+#define INVERT_BYTE_ORDER_U32(x)                                                                   \
+    ((Uint32)INVERT_BYTE_ORDER_U16 ((x) & 0xffff) << 16 |                                          \
+     (INVERT_BYTE_ORDER_U16 (((x) >> 16) & 0xffff)))
+#define INVERT_BYTE_ORDER_U64(x)                                                                   \
+    ((Uint64)INVERT_BYTE_ORDER_U32 ((x) & 0xffffffff) << 32 |                                      \
+     ((Uint64)INVERT_BYTE_ORDER_U32 (((x) >> 32) & 0xffffffff)))
 
-#define BE2LE_U2(x) LE2BE_U2 (x)
-#define BE2LE_U4(x) LE2BE_U4 (x)
-#define BE2LE_U8(x) LE2BE_U8 (x)
-
-#define LE2BE_I2(x) (Int16) LE2BE_U2 (x)
-#define LE2BE_I4(x) (Int32) LE2BE_U4 (x)
-#define LE2BE_I8(x) (Int64) LE2BE_U8 (x)
-
-#define BE2LE_I2(x) (Int16) BE2LE_U2 (x)
-#define BE2LE_I4(x) (Int32) BE2LE_U4 (x)
-#define BE2LE_I8(x) (Int64) BE2LE_U8 (x)
+#define INVERT_BYTE_ORDER_I8(x)  (Int8) (x)
+#define INVERT_BYTE_ORDER_I16(x) (Int16) INVERT_BYTE_ORDER_U16 (x)
+#define INVERT_BYTE_ORDER_I32(x) (Int32) INVERT_BYTE_ORDER_U32 (x)
+#define INVERT_BYTE_ORDER_I64(x) (Int64) INVERT_BYTE_ORDER_U64 (x)
 
 /***************************** COUNT NUMBER OF VARIADIC ARGUMENTS *********************************/
 
