@@ -51,6 +51,16 @@
 
 #define OS2_V5_DATA_SIZE (OS2_V4_DATA_SIZE + sizeof (Uint16) * 2)
 
+/**
+ * @b Initialize @c XfOtfOs2 table with given data.
+ *
+ * @param os2
+ * @param data Data buffer containing raw data.
+ * @param size Size of data buffer.
+ *
+ * @return @c os2 on success.
+ * @return @c Null otherwise.
+ * */
 XfOtfOs2 *xf_otf_os2_init (XfOtfOs2 *os2, Uint8 *data, Size size) {
     RETURN_VALUE_IF (!os2 || !data, Null, ERR_INVALID_ARGUMENTS);
 
@@ -103,8 +113,8 @@ XfOtfOs2 *xf_otf_os2_init (XfOtfOs2 *os2, Uint8 *data, Size size) {
     }
 
     os2->x_avg_char_width       = GET_AND_ADV_I2 (data);
-    os2->us_weight_class        = GET_AND_ADV_U2 (data);
-    os2->us_width_class         = GET_AND_ADV_U2 (data);
+    os2->weight_class           = GET_AND_ADV_U2 (data);
+    os2->width_class            = GET_AND_ADV_U2 (data);
     os2->type                   = GET_AND_ADV_U2 (data);
     os2->y_subscript_x_size     = GET_AND_ADV_I2 (data);
     os2->y_subscript_y_size     = GET_AND_ADV_I2 (data);
@@ -121,26 +131,99 @@ XfOtfOs2 *xf_otf_os2_init (XfOtfOs2 *os2, Uint8 *data, Size size) {
     memcpy (os2->panose, data, 10);
     data += 10;
 
-    /* TODO: work from here */
-    
-    os2->unicode_range[4]         = GET_ARR_AND_ADV_U2 (data, 0, 4);
-    os2->vend_id[4]               = GET_AND_ADV_U2 (data);
-    os2->selection                = GET_AND_ADV_U2 (data);
-    os2->first_char_index         = GET_AND_ADV_U2 (data);
-    os2->last_char_index          = GET_AND_ADV_U2 (data);
-    os2->typo_ascender            = GET_AND_ADV_U2 (data);
-    os2->typo_descender           = GET_AND_ADV_U2 (data);
-    os2->typo_line_gap            = GET_AND_ADV_U2 (data);
-    os2->win_ascent               = GET_AND_ADV_U2 (data);
-    os2->win_descent              = GET_AND_ADV_U2 (data);
-    os2->code_page_range[2]       = GET_AND_ADV_U2 (data);
-    os2->x_height                 = GET_AND_ADV_U2 (data);
-    os2->cap_height               = GET_AND_ADV_U2 (data);
+    GET_ARR_AND_ADV_U4 (os2->unicode_range, 0, 4);
+
+    memcpy (os2->panose, data, 4);
+    data += 4;
+
+    os2->selection        = GET_AND_ADV_U2 (data);
+    os2->first_char_index = GET_AND_ADV_U2 (data);
+    os2->last_char_index  = GET_AND_ADV_U2 (data);
+    os2->typo_ascender    = GET_AND_ADV_I2 (data);
+    os2->typo_descender   = GET_AND_ADV_I2 (data);
+    os2->typo_line_gap    = GET_AND_ADV_I2 (data);
+    os2->win_ascent       = GET_AND_ADV_U2 (data);
+    os2->win_descent      = GET_AND_ADV_U2 (data);
+
+    GET_ARR_AND_ADV_U4 (os2->code_page_range, 0, 2);
+
+    os2->x_height                 = GET_AND_ADV_I2 (data);
+    os2->cap_height               = GET_AND_ADV_I2 (data);
     os2->default_char             = GET_AND_ADV_U2 (data);
     os2->break_char               = GET_AND_ADV_U2 (data);
     os2->max_context              = GET_AND_ADV_U2 (data);
     os2->lower_optical_point_size = GET_AND_ADV_U2 (data);
     os2->upper_optical_point_size = GET_AND_ADV_U2 (data);
+
+    return os2;
+}
+
+/**
+ * @b Pretty Print the contents of @c XfOtfOs2 table.
+ *
+ * @param os2
+ * @param indent_level Additive indent level offset for pprinting all the fields.
+ *
+ * @return @c os2 on success.
+ * @return @c Null otherwise.
+ * */
+XfOtfOs2 *xf_otf_os2_pprint (XfOtfOs2 *os2, Uint8 indent_level) {
+    RETURN_VALUE_IF (!os2, Null, ERR_INVALID_ARGUMENTS);
+
+    Char indent[indent_level + 1];
+    memset (indent, '\t', indent_level);
+    indent[indent_level] = 0;
+
+    printf (
+        "|%.*s|OTF OS2 (Windows Metrics) Table :\n"
+        "|%s|x_avg_char_width = %d\n"
+        "|%s|weight_class = %u\n"
+        "|%s|width_class = %u\n"
+        "|%s|type = %u\n"
+        "|%s|y_subscript_x_size = %d\n"
+        "|%s|y_subscript_y_size = %d\n"
+        "|%s|y_subscript_x_offset = %d\n"
+        "|%s|y_subscript_y_offset = %d\n"
+        "|%s|y_superscript_x_size = %d\n"
+        "|%s|y_superscript_y_size = %d\n"
+        "|%s|y_superscript_x_offset = %d\n"
+        "|%s|y_superscript_y_offset = %d\n"
+        "|%s|y_strikeout_size = %d\n"
+        "|%s|y_strikeout_position = %d\n"
+        "|%s|family_class = %d\n",
+        indent_level - 1 ? indent_level - 1 : 1,
+        indent,
+        indent,
+        os2->x_avg_char_width,
+        indent,
+        os2->weight_class,
+        indent,
+        os2->width_class,
+        indent,
+        os2->type,
+        indent,
+        os2->y_subscript_x_size,
+        indent,
+        os2->y_subscript_y_size,
+        indent,
+        os2->y_subscript_x_offset,
+        indent,
+        os2->y_subscript_y_offset,
+        indent,
+        os2->y_superscript_x_size,
+        indent,
+        os2->y_superscript_y_size,
+        indent,
+        os2->y_superscript_x_offset,
+        indent,
+        os2->y_superscript_y_offset,
+        indent,
+        os2->y_strikeout_size,
+        indent,
+        os2->y_strikeout_position,
+        indent,
+        os2->family_class
+    );
 
     return os2;
 }

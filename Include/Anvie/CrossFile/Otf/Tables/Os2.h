@@ -48,8 +48,8 @@ typedef struct XfOtfOs2 {
     /* v0 */
     Uint16 version;
     Int16  x_avg_char_width;
-    Uint16 us_weight_class;
-    Uint16 us_width_class;
+    Uint16 weight_class;
+    Uint16 width_class;
     Uint16 type;
     Int16  y_subscript_x_size;
     Int16  y_subscript_y_size;
@@ -89,6 +89,7 @@ typedef struct XfOtfOs2 {
     Uint16 upper_optical_point_size;
 } XfOtfOs2;
 
-XfOtfOs2 *xf_otf_ost2_init (XfOtfOs2 *os2, Uint8 *data, Size size);
+XfOtfOs2 *xf_otf_os2_init (XfOtfOs2 *os2, Uint8 *data, Size size);
+XfOtfOs2 *xf_otf_os2_pprint (XfOtfOs2 *os2, Uint8 indent_level);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_OS2_H

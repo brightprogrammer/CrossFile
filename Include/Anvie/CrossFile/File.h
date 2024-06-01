@@ -42,10 +42,6 @@
  * @b Generic file struct to load file data in binary.
  * */
 typedef struct XfFile {
-    Size    size;
-    Uint8*  data;
-    CString name;
-    FILE*   handle;
 } XfFile;
 
 XfFile* xf_file_open (XfFile* file, CString filename);
