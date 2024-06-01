@@ -45,14 +45,7 @@
 
 #include <Anvie/Types.h>
 
-/* fwd declarations */
-typedef struct XfStructFieldDesc XfStructFieldDesc;
-typedef struct XfStructDesc      XfStructDesc;
-
-typedef enum XfStructFieldType {
-    XF_STRUCT_FIELD_TYPE_BASIC,
-    XF_STRUCT_FIELD_TYPE_STRUCT
-} XfStructFieldType;
+typedef struct XfStructDesc XfStructDesc;
 
 /**
  * @b Custom pprint method to print extra information.
@@ -60,75 +53,26 @@ typedef enum XfStructFieldType {
  * @param desc Field descriptor.
  * @param data Pointer to data that needs to be pprinted.
  * */
-typedef Bool (*XfStructFieldPprinter) (XfStructFieldDesc* desc, void* data);
-
-/**
- * @b Represents a field in a struct. This can define basic types like Uint8, Uint16, Uint32, etc...
- *    or made up types like Uint24, or Int24. Also, can recursively define this field as another
- *    struct.
- * */
-struct XfStructFieldDesc {
-    CString field_name;   /**< @b Name of field to be used for pretty printing. */
-    Uint32  field_offset; /**< @b Field offset from starting of struct where data must be read */
-    Uint32  data_offset;  /**< @b Offset of data in the data stream from where struct is loaded. */
-
-    /**< @b A field can be either absic type or a struct */
-    XfStructFieldType field_type;
-
-    /* tagged union */
-    union {
-        Size size; /**< @b Size of element in an array or just the size of field */
-
-        /**
-         * @b If this field is a struct, this is needed. This only describes element
-         * and not the array (if this is one). An element count not equal to 1 means
-         * there's an array of structs defined by the this field descriptor.
-         * */
-        XfStructDesc* desc;
-    } element;
-
-    /**
-     * @b Greater than 1 if it's an array. Equal to 1 if this is just a single element,
-     *    and equal to 0 if this is a dynamic array.
-     *
-     * Size of dynamic array is computed based on how many bytes is left to read.
-     * */
-    Uint32 element_count;
-
-    /**
-     * @b Optional custom pprinter. If this is non-null then it'll be used to print the value
-     * along with original value.
-     * */
-    XfStructFieldPprinter pprinter;
-};
-
-XfStructFieldDesc* xf_struct_field_desc_init_clone (XfStructFieldDesc* dst, XfStructFieldDesc* src);
-XfStructFieldDesc* xf_struct_field_desc_deinit (XfStructFieldDesc* field_desc);
-Uint8* xf_struct_field_desc_deinit_data (XfStructFieldDesc* field_desc, Uint8* field_data);
-
-/**
- * @b Describes a struct with as many fields as possible in a recursive way.
- *
- * A struct contains field descriptions that itself may describe further structs.
- * This
- * */
-struct XfStructDesc {
-    CString struct_name; /**< @b Name of struct to be used for pretty printing. */
-    Size    struct_size; /**< @b Auto computed value as fields keep adding up. */
-
-    /** Dynamic array of field descriptors */
-    struct {
-        Size               count;       /**< @b Number of descriptors. */
-        Size               capacity;    /**< @b Capacity of descriptor array. */
-        XfStructFieldDesc* descriptors; /**< @b Dynamic array to store descriptors. */
-    } field;
-};
+typedef Bool (*XfStructFieldPprinter) (void* data);
 
 XfStructDesc* xf_struct_desc_init (XfStructDesc* struct_desc, CString name);
 XfStructDesc* xf_struct_desc_init_clone (XfStructDesc* dst, XfStructDesc* src);
 XfStructDesc* xf_struct_desc_deinit (XfStructDesc* struct_desc);
-XfStructFieldDesc*
-       xf_struct_desc_add_field (XfStructDesc* struct_desc, XfStructFieldDesc* field_desc);
+XfStructDesc* xf_struct_desc_add_basic_field (
+    XfStructDesc*         struct_desc,
+    CString               field_name,
+    Uint32                field_offset,
+    Size                  element_size,
+    Uint32                element_count,
+    XfStructFieldPprinter pprinter
+);
+XfStructDesc* xf_struct_desc_add_struct_field (
+    XfStructDesc* struct_desc,
+    CString       field_name,
+    Uint32        field_offset,
+    XfStructDesc* element_desc,
+    Uint32        element_count
+);
 Uint8* xf_struct_desc_deinit_data (XfStructDesc* struct_desc, Uint8* struct_data);
 
 #endif // ANVIE_CROSSFILE_STRUCT_H
