@@ -34,11 +34,17 @@
 
 /* crossfile */
 #include <Anvie/CrossFile/Stream.h>
+#include <Anvie/CrossFile/Struct.h>
 
 /* local includes */
 #include "Stream.h"
 
-void xf_data_stream_close (XfDataStream* stream) {
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+
+/**
+ * @b Close the given file stream.
+ * */
+void xf_data_stream_close (XfDataStream *stream) {
     RETURN_IF (!stream, ERR_INVALID_ARGUMENTS);
     RETURN_IF (
         !stream->callbacks.close,
@@ -49,7 +55,7 @@ void xf_data_stream_close (XfDataStream* stream) {
 }
 
 #define GEN_FN(ret_type, type)                                                                     \
-    ret_type xf_data_stream_read_##type (XfDataStream* stream) {                                   \
+    ret_type xf_data_stream_read_##type (XfDataStream *stream) {                                   \
         RETURN_VALUE_IF (!stream, ((ret_type)0), ERR_INVALID_ARGUMENTS);                           \
         RETURN_VALUE_IF (                                                                          \
             !stream->callbacks.read_##type,                                                        \
@@ -75,28 +81,64 @@ GEN_FN (Int64, i64);
 #undef GEN_FN
 
 #define GEN_FN(arr_type, type)                                                                     \
-    arr_type xf_data_stream_read_##type (XfDataStream* stream, arr_type buf, Size buf_size) {      \
+    arr_type xf_data_stream_read_##type (XfDataStream *stream, arr_type buf, Size buf_size) {      \
         RETURN_VALUE_IF (!stream || buf || !buf_size, ((arr_type)0), ERR_INVALID_ARGUMENTS);       \
         RETURN_VALUE_IF (                                                                          \
-            !stream->callbacks.read_##type,                                                                  \
+            !stream->callbacks.read_##type,                                                        \
             ((arr_type)0),                                                                         \
             "Given stream does not have a read_" #type                                             \
             " method. This might indicate a bug in the application\n"                              \
         );                                                                                         \
                                                                                                    \
-        return stream->callbacks.read_##type (stream, buf, buf_size);                                        \
+        return stream->callbacks.read_##type (stream, buf, buf_size);                              \
     }
 
 GEN_FN (CString, cstring);
 
-GEN_FN (Uint8*, u8_arr);
-GEN_FN (Uint16*, u16_arr);
-GEN_FN (Uint32*, u32_arr);
-GEN_FN (Uint64*, u64_arr);
+GEN_FN (Uint8 *, u8_arr);
+GEN_FN (Uint16 *, u16_arr);
+GEN_FN (Uint32 *, u32_arr);
+GEN_FN (Uint64 *, u64_arr);
 
-GEN_FN (Int8*, i8_arr);
-GEN_FN (Int16*, i16_arr);
-GEN_FN (Int32*, i32_arr);
-GEN_FN (Int64*, i64_arr);
+GEN_FN (Int8 *, i8_arr);
+GEN_FN (Int16 *, i16_arr);
+GEN_FN (Int32 *, i32_arr);
+GEN_FN (Int64 *, i64_arr);
 
 #undef GEN_FN
+
+/**
+ * @b Create and read struct based on struct description.
+ *
+ * @param stream Data stream from where struct must be loaded.
+ * @param struct_desc Struct descripiton to follow while loading data from stream.
+ *
+ * @return Reference to memory containing data in format described by @c struct_desc on success.
+ * @return @c Null otherwise.
+ * */
+Uint8 *xf_data_stream_read_struct (XfDataStream *stream, XfStructDesc *struct_desc) {
+    RETURN_VALUE_IF (!stream || !struct_desc, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (
+        !struct_desc->struct_size,
+        Null,
+        "Given structure description describes struct to have size 0. I cannot read this!\n"
+    );
+
+    Uint8 *struct_data = ALLOCATE (Uint8, struct_desc->struct_size);
+
+    for (Size s = 0; s < struct_desc->field.count; s++) {
+        GOTO_HANDLER_IF (
+            !xf_data_stream_read_struct_field (stream, struct_desc->field.descriptors + s),
+            READ_FAILED,
+            "Failed to read struct field from data stream\n"
+        );
+    }
+
+    /* TODO: */
+
+    return struct_data;
+READ_FAILED:
+    
+    FREE(struct_data);
+    return Null;
+}

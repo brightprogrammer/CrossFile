@@ -57,16 +57,19 @@ XfStructFieldDesc*
 
     RETURN_VALUE_IF (!(dst->field_name = strdup (src->field_name)), Null, ERR_OUT_OF_MEMORY);
 
-    GOTO_HANDLER_IF (!(dst->struct_desc = NEW (XfStructDesc)), INIT_FAILED, ERR_OUT_OF_MEMORY);
-    GOTO_HANDLER_IF (
-        !xf_struct_desc_init_clone (dst->struct_desc, src->struct_desc),
-        INIT_FAILED,
-        "Failed to create StructDesc clone\n"
-    );
+    if (src->field_type == XF_STRUCT_FIELD_TYPE_BASIC) {
+        dst->element.size = src->element.size;
+    } else {
+        GOTO_HANDLER_IF (!(dst->element.desc = NEW (XfStructDesc)), INIT_FAILED, ERR_OUT_OF_MEMORY);
+        GOTO_HANDLER_IF (
+            !xf_struct_desc_init_clone (dst->element.desc, src->element.desc),
+            INIT_FAILED,
+            "Failed to create StructDesc clone\n"
+        );
+    }
 
     dst->field_offset  = src->field_offset;
     dst->data_offset   = src->data_offset;
-    dst->element_size  = src->element_size;
     dst->element_count = src->element_count;
     dst->pprinter      = src->pprinter;
 
@@ -88,9 +91,9 @@ INIT_FAILED:
 XfStructFieldDesc* xf_struct_field_desc_deinit (XfStructFieldDesc* field_desc) {
     RETURN_VALUE_IF (!field_desc, Null, ERR_INVALID_ARGUMENTS);
 
-    if (field_desc->struct_desc) {
-        xf_struct_desc_deinit (field_desc->struct_desc);
-        FREE (field_desc->struct_desc);
+    if (field_desc->field_type == XF_STRUCT_FIELD_TYPE_STRUCT && field_desc->element.desc) {
+        xf_struct_desc_deinit (field_desc->element.desc);
+        FREE (field_desc->element.desc);
     }
 
     if (field_desc->field_name) {
@@ -99,6 +102,10 @@ XfStructFieldDesc* xf_struct_field_desc_deinit (XfStructFieldDesc* field_desc) {
 
     memset (field_desc, 0, sizeof (XfStructFieldDesc));
     return field_desc;
+}
+
+Uint8* xf_struct_field_desc_deinit_data (XfStructFieldDesc* field_desc, Uint8* field_data) {
+    /* TODO: */
 }
 
 /**************************************************************************************************/
@@ -210,6 +217,7 @@ XfStructFieldDesc*
     xf_struct_desc_add_field (XfStructDesc* struct_desc, XfStructFieldDesc* field_desc) {
     RETURN_VALUE_IF (!struct_desc || !field_desc, Null, ERR_INVALID_ARGUMENTS);
 
+    /* resize field array if required */
     if (struct_desc->field.count >= struct_desc->field.capacity) {
         Size               newcap = struct_desc->field.count ? struct_desc->field.count * 2 : 4;
         XfStructFieldDesc* field_descs =
@@ -220,6 +228,7 @@ XfStructFieldDesc*
         struct_desc->field.capacity    = newcap;
     }
 
+    /* clone given field to last element */
     RETURN_VALUE_IF (
         !xf_struct_field_desc_init_clone (
             struct_desc->field.descriptors + struct_desc->field.count,
@@ -229,5 +238,28 @@ XfStructFieldDesc*
         ERR_OUT_OF_MEMORY
     );
 
+    /* append to struct size */
+    struct_desc->struct_size = MAX (struct_desc->struct_size, field_desc->field_offset);
+
+    if (field_desc->field_type == XF_STRUCT_FIELD_TYPE_BASIC) {
+        if (field_desc->element_count) {
+            struct_desc->struct_size += field_desc->element.size * field_desc->element_count;
+        } else {
+            struct_desc->struct_size += sizeof (Uint64); /* pointer for variable sized array. */
+        }
+    } else {
+        if (field_desc->element_count) {
+            /* we can only use struct_size here if we assume the provided struct does not change */
+            struct_desc->struct_size +=
+                field_desc->element.desc->struct_size * field_desc->element_count;
+        } else {
+            struct_desc->struct_size += sizeof (Uint64); /* pointer for variable sized array. */
+        }
+    }
+
     return struct_desc->field.descriptors + struct_desc->field.count++;
+}
+
+Uint8* xf_struct_desc_deinit_data (XfStructDesc* struct_desc, Uint8* struct_data) {
+    /* TODO: */
 }

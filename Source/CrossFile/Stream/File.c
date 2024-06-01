@@ -80,6 +80,15 @@ static Int64*  file_stream_read_i64_arr (XfFileStream* stream, Int64* buf, Size 
 /***************************** FILE STREAM PUBLIC METHOD DEFINITIONS ******************************/
 /**************************************************************************************************/
 
+/**
+ * @b Open a file stream by loading given file and assuming file has given byte-order.
+ *
+ * @param filename Name of file to be loaded.
+ * @param byte_order Byte Order or endianness of the file data stream.
+ *
+ * @return Reference to opened @c XfDataStream on success.
+ * @return @ Null otherwise.
+ * */
 XfDataStream* xf_data_stream_open_file (CString filename, XfByteOrder byte_order) {
     RETURN_VALUE_IF (!filename || !byte_order, Null, ERR_INVALID_ARGUMENTS);
 
@@ -239,8 +248,7 @@ static CString file_stream_read_cstring (XfFileStream* fstream, CString buf, Siz
         if (XF_HOST_BYTE_ORDER_IS_LSB && fstream->data_stream.byte_order == XF_BYTE_ORDER_MSB ||   \
             XF_HOST_BYTE_ORDER_IS_MSB && fstream->data_stream.byte_order == XF_BYTE_ORDER_LSB) {   \
             for (Size s = 0; s < buf_size; s++) {                                                  \
-                buf[s] = INVERT_BYTE_ORDER_##type_caps (*((elem_type*)(fstream->file_data +        \
-                                                                       fstream->file_cursor)));    \
+                buf[s] = INVERT_BYTE_ORDER_##type_caps (((elem_type*)(fstream->file_data))[s]);         \
                 fstream->file_cursor += sizeof (elem_type);                                        \
             }                                                                                      \
         } else {                                                                                   \
@@ -251,16 +259,6 @@ static CString file_stream_read_cstring (XfFileStream* fstream, CString buf, Siz
         }                                                                                          \
         return buf;                                                                                \
     }
-
-static CString file_stream_read_cstring (XfFileStream* fstream, CString buf, Size buf_size);
-static Uint8*  file_stream_read_u8_arr (XfFileStream* fstream, Uint8* buf, Size buf_size);
-static Uint16* file_stream_read_u16_arr (XfFileStream* fstream, Uint16* buf, Size buf_size);
-static Uint32* file_stream_read_u32_arr (XfFileStream* fstream, Uint32* buf, Size buf_size);
-static Uint64* file_stream_read_u64_arr (XfFileStream* fstream, Uint64* buf, Size buf_size);
-static Int8*   file_stream_read_i8_arr (XfFileStream* fstream, Int8* buf, Size buf_size);
-static Int16*  file_stream_read_i16_arr (XfFileStream* fstream, Int16* buf, Size buf_size);
-static Int32*  file_stream_read_i32_arr (XfFileStream* fstream, Int32* buf, Size buf_size);
-static Int64*  file_stream_read_i64_arr (XfFileStream* fstream, Int64* buf, Size buf_size);
 
 GEN_FN (Uint8, U8, u8_arr);
 GEN_FN (Uint16, U16, u16_arr);

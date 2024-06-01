@@ -49,6 +49,11 @@
 typedef struct XfStructFieldDesc XfStructFieldDesc;
 typedef struct XfStructDesc      XfStructDesc;
 
+typedef enum XfStructFieldType {
+    XF_STRUCT_FIELD_TYPE_BASIC,
+    XF_STRUCT_FIELD_TYPE_STRUCT
+} XfStructFieldType;
+
 /**
  * @b Custom pprint method to print extra information.
  *
@@ -66,7 +71,21 @@ struct XfStructFieldDesc {
     CString field_name;   /**< @b Name of field to be used for pretty printing. */
     Uint32  field_offset; /**< @b Field offset from starting of struct where data must be read */
     Uint32  data_offset;  /**< @b Offset of data in the data stream from where struct is loaded. */
-    Uint32  element_size; /**< @b Size of element in an array or just the size of field */
+
+    /**< @b A field can be either absic type or a struct */
+    XfStructFieldType field_type;
+
+    /* tagged union */
+    union {
+        Size size; /**< @b Size of element in an array or just the size of field */
+
+        /**
+         * @b If this field is a struct, this is needed. This only describes element
+         * and not the array (if this is one). An element count not equal to 1 means
+         * there's an array of structs defined by the this field descriptor.
+         * */
+        XfStructDesc* desc;
+    } element;
 
     /**
      * @b Greater than 1 if it's an array. Equal to 1 if this is just a single element,
@@ -77,13 +96,6 @@ struct XfStructFieldDesc {
     Uint32 element_count;
 
     /**
-     * @b If this field is a struct, this is needed. This only describes element
-     * and not the array (if this is one). An element count not equal to 1 means
-     * there's an array of structs defined by the this field descriptor.
-     * */
-    XfStructDesc* struct_desc;
-
-    /**
      * @b Optional custom pprinter. If this is non-null then it'll be used to print the value
      * along with original value.
      * */
@@ -92,6 +104,7 @@ struct XfStructFieldDesc {
 
 XfStructFieldDesc* xf_struct_field_desc_init_clone (XfStructFieldDesc* dst, XfStructFieldDesc* src);
 XfStructFieldDesc* xf_struct_field_desc_deinit (XfStructFieldDesc* field_desc);
+Uint8* xf_struct_field_desc_deinit_data (XfStructFieldDesc* field_desc, Uint8* field_data);
 
 /**
  * @b Describes a struct with as many fields as possible in a recursive way.
@@ -101,6 +114,7 @@ XfStructFieldDesc* xf_struct_field_desc_deinit (XfStructFieldDesc* field_desc);
  * */
 struct XfStructDesc {
     CString struct_name; /**< @b Name of struct to be used for pretty printing. */
+    Size    struct_size; /**< @b Auto computed value as fields keep adding up. */
 
     /** Dynamic array of field descriptors */
     struct {
@@ -114,6 +128,7 @@ XfStructDesc* xf_struct_desc_init (XfStructDesc* struct_desc, CString name);
 XfStructDesc* xf_struct_desc_init_clone (XfStructDesc* dst, XfStructDesc* src);
 XfStructDesc* xf_struct_desc_deinit (XfStructDesc* struct_desc);
 XfStructFieldDesc*
-    xf_struct_desc_add_field (XfStructDesc* struct_desc, XfStructFieldDesc* field_desc);
+       xf_struct_desc_add_field (XfStructDesc* struct_desc, XfStructFieldDesc* field_desc);
+Uint8* xf_struct_desc_deinit_data (XfStructDesc* struct_desc, Uint8* struct_data);
 
 #endif // ANVIE_CROSSFILE_STRUCT_H
