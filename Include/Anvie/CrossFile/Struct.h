@@ -46,6 +46,7 @@
 #include <Anvie/Types.h>
 
 typedef struct XfStructDesc XfStructDesc;
+typedef struct XfDataStream XfDataStream;
 
 /**
  * @b Custom pprint method to print extra information.
@@ -53,7 +54,7 @@ typedef struct XfStructDesc XfStructDesc;
  * @param desc Field descriptor.
  * @param data Pointer to data that needs to be pprinted.
  * */
-typedef Bool (*XfStructFieldPprinter) (void* data);
+typedef Bool (*XfStructFieldPprinter) (Uint8* data);
 
 XfStructDesc* xf_struct_desc_init (XfStructDesc* struct_desc, CString name);
 XfStructDesc* xf_struct_desc_init_clone (XfStructDesc* dst, XfStructDesc* src);
@@ -73,6 +74,7 @@ XfStructDesc* xf_struct_desc_add_struct_field (
     XfStructDesc* element_desc,
     Uint32        element_count
 );
+Uint8* xf_struct_desc_init_data_from_stream (XfStructDesc* struct_desc, XfDataStream* stream);
 Uint8* xf_struct_desc_deinit_data (XfStructDesc* struct_desc, Uint8* struct_data);
 
 #endif // ANVIE_CROSSFILE_STRUCT_H

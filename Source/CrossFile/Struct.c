@@ -33,6 +33,7 @@
 #include <Anvie/Common.h>
 
 /* crossfile */
+#include <Anvie/CrossFile/Stream.h>
 #include <Anvie/CrossFile/Struct.h>
 
 /* libc */
@@ -81,6 +82,12 @@ static inline StructFieldDesc*
     struct_field_desc_init_clone (StructFieldDesc* dst, StructFieldDesc* src);
 static inline StructFieldDesc* struct_field_desc_deinit (StructFieldDesc* field_desc);
 static inline Uint8* struct_field_desc_deinit_data (StructFieldDesc* field_desc, Uint8* field_data);
+static inline Uint8* struct_field_desc_init_data_from_stream (
+    StructFieldDesc* field_desc,
+    XfDataStream*    data_stream,
+    Uint8*           buf,
+    Size             buf_size
+);
 
 /**
  * @b Describes a struct with as many fields as possible in a recursive way.
@@ -101,7 +108,13 @@ struct XfStructDesc {
 };
 
 static inline XfStructDesc*
-    struct_desc_add_field (XfStructDesc* struct_desc, StructFieldDesc* field_desc);
+                     struct_desc_add_field (XfStructDesc* struct_desc, StructFieldDesc* field_desc);
+static inline Uint8* struct_desc_init_data_from_stream (
+    XfStructDesc* struct_desc,
+    XfDataStream* stream,
+    Uint8*        buf,
+    Size          buf_size
+);
 
 /**************************************************************************************************/
 /******************************** STRUCT DESCRIPTOR PUBLIC METHODS ********************************/
@@ -279,6 +292,45 @@ XfStructDesc* xf_struct_desc_add_struct_field (
 }
 
 /**
+ * @b Create and read struct based on struct description.
+ *
+ * @param stream Data stream from where struct must be loaded.
+ * @param struct_desc Struct descripiton to follow while loading data from stream.
+ *
+ * @return Reference to memory containing data in format described by @c struct_desc on success.
+ * @return @c Null otherwise.
+ * */
+Uint8* xf_struct_desc_init_data_from_stream (XfStructDesc* struct_desc, XfDataStream* stream) {
+    RETURN_VALUE_IF (!stream || !struct_desc, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (
+        !struct_desc->struct_size,
+        Null,
+        "Given structure description describes struct to have size 0. I cannot read this!\n"
+    );
+
+    Uint8* struct_data = ALLOCATE (Uint8, struct_desc->struct_size);
+    Uint8* buf         = struct_data;
+    Size   buf_size    = struct_desc->struct_size;
+
+    for (Size s = 0; s < struct_desc->field.count; s++) {
+        StructFieldDesc* field_desc = struct_desc->field.descriptors + s;
+
+        GOTO_HANDLER_IF (
+            !struct_field_desc_init_data_from_stream (field_desc, stream, buf, buf_size),
+            READ_FAILED,
+            "Failed to read/init field from data stream\n"
+        );
+    }
+
+    return struct_data;
+
+READ_FAILED:
+    xf_struct_desc_deinit_data (struct_desc, struct_data);
+    FREE (struct_data);
+    return Null;
+}
+
+/**
  * @b Using given struct descriptor, deinitialize the contents of given struct data.
  *
  * @param struct_desc Structure descriptor to follow while de-initialization
@@ -309,8 +361,27 @@ Uint8* xf_struct_desc_deinit_data (XfStructDesc* struct_desc, Uint8* struct_data
 static StructFieldDesc* struct_field_desc_init_clone (StructFieldDesc* dst, StructFieldDesc* src) {
     RETURN_VALUE_IF (!dst || !src, Null, ERR_INVALID_ARGUMENTS);
 
+    /* make sure element count is non-zero */
+    RETURN_VALUE_IF (
+        !src->element_count,
+        Null,
+        "Field must have at least one element with given description. Current description states 0 "
+        "elements.\n"
+    );
+
+    /* make sure element size is non-zero */
+    RETURN_VALUE_IF (
+        ((src->field_is_basic && !src->element_size) ||
+         (!src->field_is_basic && !src->element_desc->struct_size)),
+        Null,
+        "Field cannot have 0 size. Current description describes field to have an element size of "
+        "0.\n"
+    );
+
+    /* copy name */
     RETURN_VALUE_IF (!(dst->field_name = strdup (src->field_name)), Null, ERR_OUT_OF_MEMORY);
 
+    /* copy description */
     if (src->field_is_basic) {
         dst->element_size = src->element_size;
     } else {
@@ -357,10 +428,81 @@ StructFieldDesc* struct_field_desc_deinit (StructFieldDesc* field_desc) {
     return field_desc;
 }
 
-Uint8* xf_struct_field_desc_deinit_data (StructFieldDesc* field_desc, Uint8* field_data) {
+Uint8* struct_field_desc_deinit_data (StructFieldDesc* field_desc, Uint8* field_data) {
     RETURN_VALUE_IF (!field_desc || !field_data, Null, ERR_INVALID_ARGUMENTS);
     /* TODO: */
     return field_data;
+}
+
+/**
+ * @b Initialize given memory region with struct field data.
+ *
+ * Size of buffer must always match exactly the size of data to be read.
+ * - If this field is a single element then size must be that of sigle element.
+ * - If field is an array of known size then size must match the product of field size
+ *   and element count.
+ * - If field is a variable sized array then @c buf_size must be integral multiple of field size,
+ *   and element count will be deduced by dividing buf_size by element size.
+ *
+ * @param field_desc
+ * @param stream
+ * @param buf
+ * @param buf_size
+ *
+ * @return @c buf on success
+ * @return @c Null otherwise.
+ * */
+static inline Uint8* struct_field_desc_init_data_from_stream (
+    StructFieldDesc* field_desc,
+    XfDataStream*    stream,
+    Uint8*           buf,
+    Size             buf_size
+) {
+    RETURN_VALUE_IF (!field_desc || !stream || !buf, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!buf_size, Null, "No space left to write to in provided buffer\n");
+
+    /* HACK: a read hack to read values that are not in powers of two or are of size greater than 8 */
+    if (field_desc->field_is_basic) {
+        for (Size s = 0; s < field_desc->element_count; s++) {
+            if ((XF_HOST_BYTE_ORDER_IS_LSB && xf_data_stream_byte_order_is_msb (stream)) ||
+                (XF_HOST_BYTE_ORDER_IS_MSB && xf_data_stream_byte_order_is_lsb (stream))) {
+                /* invert read order */
+                for (Size s = 0; s < field_desc->element_size; s++) {
+                    buf[field_desc->element_size - 1 - s] = xf_data_stream_read_u8 (stream);
+                }
+            } else {
+                /* read order remains same */
+                for (Size s = 0; s < field_desc->element_size; s++) {
+                    buf[s] = xf_data_stream_read_u8 (stream);
+                }
+            }
+        }
+    } else {
+        Uint8* buf_iter = buf;
+        RETURN_VALUE_IF (
+            buf_size < (field_desc->element_count * field_desc->element_desc->struct_size),
+            Null,
+            "Given buffer size is less than amount of data to be read into it. Buffer to "
+            "small. Cannot read into this.\n"
+        );
+
+        /* read all elements in the array */
+        for (Size s = 0; s < field_desc->element_count; s++) {
+            RETURN_VALUE_IF (
+                !struct_desc_init_data_from_stream (
+                    field_desc->element_desc,
+                    stream,
+                    buf_iter,
+                    field_desc->element_desc->struct_size
+                ),
+                Null,
+                "Failed to read struct field\n"
+            );
+            buf_iter += field_desc->element_desc->struct_size;
+        }
+    }
+
+    return buf;
 }
 
 /**************************************************************************************************/
@@ -372,7 +514,7 @@ Uint8* xf_struct_field_desc_deinit_data (StructFieldDesc* field_desc, Uint8* fie
  * completely separate from given copy will be kept and destroyed later on.
  *
  * @param struct_desc
- * @param field_desc Description of field to be added to struct.
+ * @param field_desc Description  of field to be added to struct.
  *
  * @return Reference to new @c XfStructFieldDesc added on success.
  * @return @c Null otherwise.
@@ -380,6 +522,22 @@ Uint8* xf_struct_field_desc_deinit_data (StructFieldDesc* field_desc, Uint8* fie
 static inline XfStructDesc*
     struct_desc_add_field (XfStructDesc* struct_desc, StructFieldDesc* field_desc) {
     RETURN_VALUE_IF (!struct_desc || !field_desc, Null, ERR_INVALID_ARGUMENTS);
+
+    /* make sure element size is never zero */
+    RETURN_VALUE_IF (
+        ((field_desc->field_is_basic && !field_desc->element_size) ||
+         (!field_desc->field_is_basic && !field_desc->element_desc->struct_size)),
+        Null,
+        "Element size in field cannot be zero!\n"
+    );
+
+    /* make sure element count is never zero */
+    RETURN_VALUE_IF (
+        !field_desc->element_count,
+        Null,
+        "Field must have at least one element with given description. Current description states 0 "
+        "elements\n"
+    );
 
     /* resize field array if required */
     if (struct_desc->field.count >= struct_desc->field.capacity) {
@@ -406,20 +564,23 @@ static inline XfStructDesc*
     struct_desc->struct_size = MAX (struct_desc->struct_size, field_desc->field_offset);
 
     if (field_desc->field_is_basic) {
-        if (field_desc->element_count) {
-            struct_desc->struct_size += field_desc->element_size * field_desc->element_count;
-        } else {
-            struct_desc->struct_size += sizeof (Uint64); /* pointer for variable sized array. */
-        }
+        struct_desc->struct_size += field_desc->element_size * field_desc->element_count;
     } else {
-        if (field_desc->element_count) {
-            /* we can only use struct_size here if we assume the provided struct does not change */
-            struct_desc->struct_size +=
-                field_desc->element_desc->struct_size * field_desc->element_count;
-        } else {
-            struct_desc->struct_size += sizeof (Uint64); /* pointer for variable sized array. */
-        }
+        /* we can only use struct_size here if we assume the provided struct does not change */
+        struct_desc->struct_size +=
+            field_desc->element_desc->struct_size * field_desc->element_count;
     }
 
     return struct_desc;
+}
+
+static inline Uint8* struct_desc_init_data_from_stream (
+    XfStructDesc* struct_desc,
+    XfDataStream* stream,
+    Uint8*        buf,
+    Size          buf_size
+) {
+    RETURN_VALUE_IF(!struct_desc || !stream || !buf, Null, ERR_INVALID_ARGUMENTS);
+
+    
 }

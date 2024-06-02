@@ -107,38 +107,8 @@ GEN_FN (Int64 *, i64_arr);
 
 #undef GEN_FN
 
-/**
- * @b Create and read struct based on struct description.
- *
- * @param stream Data stream from where struct must be loaded.
- * @param struct_desc Struct descripiton to follow while loading data from stream.
- *
- * @return Reference to memory containing data in format described by @c struct_desc on success.
- * @return @c Null otherwise.
- * */
-Uint8 *xf_data_stream_read_struct (XfDataStream *stream, XfStructDesc *struct_desc) {
-    RETURN_VALUE_IF (!stream || !struct_desc, Null, ERR_INVALID_ARGUMENTS);
-    RETURN_VALUE_IF (
-        !struct_desc->struct_size,
-        Null,
-        "Given structure description describes struct to have size 0. I cannot read this!\n"
-    );
+XfByteOrder xf_data_stream_get_byte_order (XfDataStream *stream) {
+    RETURN_VALUE_IF (!stream, XF_BYTE_ORDER_UNKNOWN, ERR_INVALID_ARGUMENTS);
 
-    Uint8 *struct_data = ALLOCATE (Uint8, struct_desc->struct_size);
-
-    for (Size s = 0; s < struct_desc->field.count; s++) {
-        GOTO_HANDLER_IF (
-            !xf_data_stream_read_struct_field (stream, struct_desc->field.descriptors + s),
-            READ_FAILED,
-            "Failed to read struct field from data stream\n"
-        );
-    }
-
-    /* TODO: */
-
-    return struct_data;
-READ_FAILED:
-    
-    FREE(struct_data);
-    return Null;
+    return stream->byte_order;
 }

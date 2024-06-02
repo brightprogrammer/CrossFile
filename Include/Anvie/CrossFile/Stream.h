@@ -45,6 +45,8 @@
 
 #include <Anvie/Types.h>
 
+#include "Anvie/Common.h"
+
 /* fwd declarations */
 typedef struct XfStructDesc XfStructDesc;
 
@@ -103,6 +105,26 @@ Int16* xf_data_stream_read_i16_arr (XfDataStream* stream, Int16* buf, Size buf_s
 Int32* xf_data_stream_read_i32_arr (XfDataStream* stream, Int32* buf, Size buf_size);
 Int64* xf_data_stream_read_i64_arr (XfDataStream* stream, Int64* buf, Size buf_size);
 
-Uint8* xf_data_stream_read_struct (XfDataStream* stream, XfStructDesc* struct_desc);
+static inline Bool xf_data_stream_read_bool (XfDataStream* stream) {
+    RETURN_VALUE_IF (!stream, 0, ERR_INVALID_ARGUMENTS);
+    return (Bool)xf_data_stream_read_u8 (stream);
+}
+
+static inline Char xf_data_stream_read_char (XfDataStream* stream) {
+    RETURN_VALUE_IF (!stream, 0, ERR_INVALID_ARGUMENTS);
+    return (Char)xf_data_stream_read_i8 (stream);
+}
+
+XfByteOrder xf_data_stream_get_byte_order (XfDataStream* stream);
+
+static inline Bool xf_data_stream_byte_order_is_lsb (XfDataStream* stream) {
+    RETURN_VALUE_IF (!stream, False, ERR_INVALID_ARGUMENTS);
+    return xf_data_stream_get_byte_order (stream) == XF_BYTE_ORDER_LSB;
+}
+
+static inline Bool xf_data_stream_byte_order_is_msb (XfDataStream* stream) {
+    RETURN_VALUE_IF (!stream, False, ERR_INVALID_ARGUMENTS);
+    return xf_data_stream_get_byte_order (stream) == XF_BYTE_ORDER_MSB;
+}
 
 #endif // ANVIE_CROSSFILE_STREAM_H
