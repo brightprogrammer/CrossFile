@@ -144,6 +144,12 @@ bitmap of Uint16 as XfOtfHeadFlags {
     /*TODO: as an extra feature, we can add a way to provide documentation */
 };
 
+/* if READ_SIZE is used, reading this variable struct will require a read of size expr */
+fixed SomeVariableStruct {
+    array of Uint32 as fixed_data of size 128;
+    vector of Uint64 as variable_datra of size READ_SIZE - fixed_data.size;
+}
+
 enum of Uint16 as XfOtfLanguageId {
     ENGLISH = 0;
 };
@@ -193,6 +199,8 @@ read XfOtfFile;
 "[]" means optional.
 
 Grammar is work in progress. It's in EBNF format.
+Even though this grammar is context-free, the language is context-sensitive,
+meaning the actual grammar (based on how it'll be parsed), will be context sensitive.
 
 ```ebnf
 # any type of whitespace
@@ -213,7 +221,7 @@ expr_in_brackets = "(", S, expr, S, ")";
 expr_term = number | accessed_field | expr_in_brackets;
 expr_factor = expr_term, {S, "*" | "/", S, expr_term};
 arith_expr = expr_factor, {S, "+" | "-", S, expr_factor};
-bool_binexpr = arith_expr, {S, "or" | "and" | "xor", "left shift", "right shift", S, arith_expr};
+bool_binexpr = expr, {S, "or" | "and" | "xor", "left shift", "right shift", S, expr};
 bool_unexpr = "not", S, bool_binexpr;
 expr = arith_expr | bool_binexpr | bool_unexpr;
 
@@ -225,25 +233,20 @@ renamed_type = "Offset16"  | "Offset32"  | "Offset64" |
 type = "CString" | base_type | renamed_type | id;
 
 # different type of comparisions
-cmp_eq  = expr, S,    "is", [S, "equal to"],        S, expr;
-cmp_le  = expr, S,    "is less or equal to",        S, expr;
-cmp_lt  = expr, S,    "is less than",               S, expr;
-cmp_ge  = expr, S,    "is greater or equal to",     S, expr;
-cmp_gt  = expr, S,    "is greater than",            S, expr;
-cmp_neq = expr, S,    "is not", [S, "equal to"],    S, expr;
-cmp_nle = expr, S,    "is not less or equal to",    S, expr;
-cmp_nlt = expr, S,    "is not less than",           S, expr;
-cmp_nge = expr, S,    "is not greater or equal to", S, expr;
-cmp_ngt = expr, S,    "is not greater than",        S, expr;
+cmp_eq  = expr, S,     "==" | "is", [S, "equal to"]                                    , S, expr;
+cmp_le  = expr, S,     "<=" | "is less or equal to"    | "not greater than"            , S, expr;
+cmp_lt  = expr, S,     "<"  | "is less than"           | "not greater than or equal to", S, expr;
+cmp_ge  = expr, S,     ">=" | "is greater or equal to" | "not less than"               , S, expr;
+cmp_gt  = expr, S,     ">"  | "is greater than"        | "not less than or equal to"   , S, expr;
+cmp_neq = expr, S,     "!=" | "is not", [S, "equal to"]                                , S, expr;
 
-cmp    = cmp_eq  | cmp_le  | cmp_lt  | cmp_ge  | cmp_gt
-       | cmp_neq | cmp_nle | cmp_nlt | cmp_nge | cmp_ngt;
+cmp    = cmp_eq  | cmp_le  | cmp_lt  | cmp_ge  | cmp_gt | cmp_neq;
 
 # code block is a sequence of instructions in the brackets
 code_block = "{", S, (insn | switch_block | for_each_block | if_then_else_block, S), "}";
 case_block = "case", S, expr, S, ":" code_block;
 switch_block = "switch on", S, expr, S, "{", S, (case_block, S), "}";
-for_each_block = "for each", S, id, S, "in", S, rename, S, code_block;
+for_each_block = "for each", S, id, S, "in", S, accessed_field, S, code_block;
 if_then_else_block = "if", S, cmp, S, "then", S, code_block, [S, "else", code_block];
 
 # different types of instructions
@@ -255,9 +258,9 @@ insn_assign = accessed_field, S, "=", S, expr;
 insn = insn_break_cont | insn_assert | insn_using | insn_read | insn_assign, S, ";";
 
 arglist = "(", S, {rename, S, [","]}, S, ")"
-compute_single = "compute", S, id, S, arglist, S, compute_block;
-compute_each = "compute", S, for_each;
-compute = compute_each | compute_single;
+compute_block = "compute", S, arglist, S, code_block;
+compute_each = "compute", S, for_each_block;
+compute = compute_each | compute_block;
 
 # includes two types of variable declarations
 # first one is simple one, and other is an inline shared which is analogous to unions in C.
@@ -268,7 +271,8 @@ variable_desc = single_variable_decl | shared_variable_decl;
 # fixed shape type structures in StAsm
 fixed = "fixed", S, id, S, "{", S
             variable_decl,
-            {S, compute}
+            {S, compute},
+            {S, insn_assert},
         S, "}", S, ";";
 
 # shared (union) shapes. All variables share the same memory region.
@@ -285,7 +289,8 @@ polymorph  = "polymorph" , S, id, S, "{", S
                 "morph on", S, expr, S, ";", S
                 {variable_decl, S},
                 ("morph to", S, type, S, "as", S, id, S, "if", S, id, S, "is", S, expr, S, ";"),
-             S, "}"
+                {S, insn_assert},
+             S, "}", S, ";";
 
 # bitmaps (enums acting as flags)
 # They expressions assigned to entries in bitmaps are raised to the power of two to compute
@@ -305,4 +310,9 @@ vector = "vector of", S, type, S, "as", S, id, [S, "of size", S, expr], S, ";";
 
 # arrays need to specify their size to be a constant expression before the program runs.
 array = "array of", S, type, S, "as", S, id, S, "of size", S, number, S, ";";
+
+# Final grammar for complete code
+# The final read satement in the global scope is the starting point of reading
+# the binary file.
+code = (bitmap | enum | fixed | shared | polymorph), read id;
 ```

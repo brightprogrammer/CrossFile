@@ -1,0 +1,29 @@
+/**
+ * structure assembly description for otf file format 
+ * */
+
+fixed XfOtfTableRecord {
+    XfOtfTableTag table_tag;
+    Uint32        checksum;
+    Uint32        offset; /* Offset from beginning of file. */
+    Uint32        length; /* Length of table. */
+}
+
+fixed XfOtfTableDir {
+    Uint32            sfnt_version;
+    Uint16            num_tables;
+    Uint16            search_range;
+    Uint16            entry_selector;
+    Uint16            range_shift;
+    
+    vector of XfOtfTableRecord as table_records of size num_tables;
+
+    assert num_tables is not equal to 0;
+    assert sfnt_version is either 0x00010000 or 'OTTO';
+}
+
+fixed XfOtfFile {
+    XfOtfTableDir table_dir;
+}
+
+read XfOtfFile;
