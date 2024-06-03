@@ -106,7 +106,7 @@ shared OffsetOrSize {
 /* size and shape of structure is fixed */
 fixed XfOtfTableRecord {
     /* shared types can be inlined as well! but only with the use of "or" */
-    Uint32 tag_value or
+    Uint32           tag_value or
     array of Char as tag_chars of size 4;
 
     Uint32   checksum;
@@ -115,9 +115,6 @@ fixed XfOtfTableRecord {
 
     assert size is not 0;
     assert tag.tag_value is not 0
-
-    single XfOtfTableRecord references single XfOtfHead when tag_chars = 'head';
-    single XfOtfTableRecord references single XfOtfCmap when tag_chars = 'cmap';
 }
 
 fixed XfOtfTableDir {
@@ -165,10 +162,32 @@ fixed XfOtfHead {
     assert magic_number is OTF_MAGIC_NUMBER;
 };
 
+fixed XfOtfFile {
+    XfOtfTableDir table_dir;
+
+    XfOtfHead head;
+    XfOtfCmap cmap;
+    .
+    . (many more fields like this continue)
+    .
+
+    compute each record in table_dir.records {
+        /* we could've read the table_dir here as well for a temporary variable */
+        /* read table_dir from @FILE.data_begin */
+        switch on record.tag_chars {
+            case 'head' : {read head from (@FILE.data_begin + record.offset) of size record.length};
+            case 'cmap' : {read head from (@FILE.data_begin + record.offset) of size record.length};
+            .
+            . (many more cases continue like this)
+            .
+        }
+    }
+};
+
 /* There must be only one statement in the global scope.
  * This will define which structure actually represents the shape of file.
  * */
-read XfOtfTableDir;
+read XfOtfFile;
 ```
 
 ## Grammar
@@ -177,21 +196,72 @@ read XfOtfTableDir;
 "()" means repeat atleast once
 "[]" means optional.
 
+Grammar is work in progress. It's in EBNF format.
+
 ```ebnf
+# any type of whitespace
 S = {" " | "\t" | "\n" | "\b" | "\f"};
 
+# accessed field like table_dir.records.count
+# this is more generalized form of a general field name
 accessed_field = id, {".", id};
 
-args = { accessed_field, ["as", id], [","] }
+# rename an accessed field or any variable
+# this rename rule only directly applies to inline rename
+rename = accessed_field, [S, "as", S, id];
 
-stmt_using = "using", accessed_field, "as", id;
-stmt_find = "find"
+# machine for mathematical expressions
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
+number = digit, {digit};
+expr_in_brackets = "(", S, expr, S, ")";
+expr_term = number | accessed_field | expr_in_brackets;
+expr_factor = expr_term, {S, "*" | "/", S, expr_term};
+arith_expr = expr_factor, {S, "+" | "-", S, expr_factor};
+bool_binexpr = arith_expr, {S, "or" | "and" | "xor", "left shift", "right shift", S, arith_expr};
+bool_unexpr = "not", S, bool_binexpr;
+expr = arith_expr | bool_binexpr | bool_unexpr;
 
-compute = "compute", S, id, S, "(", S, args, S, ")", S, "{"
-          
-          "}";
+base_type = "Uint8" | "Uint16" | "Uint32" | "Uint64"
+          | "Int8"  | "Int16"  | "Int32"  | "Int64"
+          | "CString";
+type = base_type | id;
+
+# different type of comparisions
+cmp_eq  = expr, S,    "is", [S, "equal to"],        S, expr;
+cmp_le  = expr, S,    "is less or equal to",        S, expr;
+cmp_lt  = expr, S,    "is less than",               S, expr;
+cmp_ge  = expr, S,    "is greater or equal to",     S, expr;
+cmp_gt  = expr, S,    "is greater than",            S, expr;
+cmp_neq = expr, S,    "is not", [S, "equal to"],    S, expr;
+cmp_nle = expr, S,    "is not less or equal to",    S, expr;
+cmp_nlt = expr, S,    "is not less than",           S, expr;
+cmp_nge = expr, S,    "is not greater or equal to", S, expr;
+cmp_ngt = expr, S,    "is not greater than",        S, expr;
+
+cmp    = cmp_eq  | cmp_le  | cmp_lt  | cmp_ge  | cmp_gt
+       | cmp_neq | cmp_nle | cmp_nlt | cmp_nge | cmp_ngt;
+
+# code block is a sequence of instructions in the brackets
+code_block = "{", S, (insn | switch_block | for_each_block | if_then_else_block, S), "}";
+case_block = "case", S, expr, S, ":" code_block;
+switch_block = "switch on", S, expr, S, "{", S, (case_block, S), "}";
+for_each_block = "for each", S, id, S, "in", S, rename, S, code_block;
+if_then_else_block = "if", S, cmp, S, "then", S, code_block, [S, "else", code_block];
+
+# different types of instructions
+insn_break_cont = "break" | "continue";
+insn_assert = "assert", S, cmp;
+insn_using = "using", S, rename;
+insn_read = "read", S, id, S, "from", S, expr, [S, "of size", S, expr];
+insn_assign = accessed_field, S, "=", S, expr;
+insn = insn_break_cont | insn_assert | insn_using | insn_read | insn_assign, S, ";";
+
+arglist = "(", S, {rename, S, [","]}, S, ")"
+compute_single = "compute", S, id, S, arglist, S, compute_block;
+
+compute_each = "compute", S, for_each;
 
 fixed = "fixed", S, id, S, "{",
-            (S, id, S, id, S, ";", S),
+            (S, type, S, id, S, ";", S),
         "}", S, ";";
 ```
