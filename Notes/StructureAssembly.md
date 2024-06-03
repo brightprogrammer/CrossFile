@@ -141,15 +141,11 @@ bitmap of Uint16 as XfOtfHeadFlags {
     FLAG3 = 2;
     FLAG4 = 3;
 
-    /* some extra data to be used to pprint this bitmap or enum */
-    FLAG1.str = "Something cool about flag1";
-    FLAG3.str = "Something better about flag3";
+    /*TODO: as an extra feature, we can add a way to provide documentation */
 };
 
 enum of Uint16 as XfOtfLanguageId {
     ENGLISH = 0;
-
-    ENGLISH.str = "English (en)"
 };
 
 fixed XfOtfHead {
@@ -222,9 +218,11 @@ bool_unexpr = "not", S, bool_binexpr;
 expr = arith_expr | bool_binexpr | bool_unexpr;
 
 base_type = "Uint8" | "Uint16" | "Uint32" | "Uint64"
-          | "Int8"  | "Int16"  | "Int32"  | "Int64"
-          | "CString";
-type = base_type | id;
+          | "Int8"  | "Int16"  | "Int32"  | "Int64";
+renamed_type = "Offset16"  | "Offset32"  | "Offset64" |
+                "Address16" | "Address32" | "Address64" |
+                "Size16"    | "Size32"    | "Size64";
+type = "CString" | base_type | renamed_type | id;
 
 # different type of comparisions
 cmp_eq  = expr, S,    "is", [S, "equal to"],        S, expr;
@@ -258,10 +256,53 @@ insn = insn_break_cont | insn_assert | insn_using | insn_read | insn_assign, S, 
 
 arglist = "(", S, {rename, S, [","]}, S, ")"
 compute_single = "compute", S, id, S, arglist, S, compute_block;
-
 compute_each = "compute", S, for_each;
+compute = compute_each | compute_single;
 
-fixed = "fixed", S, id, S, "{",
-            (S, type, S, id, S, ";", S),
-        "}", S, ";";
+# includes two types of variable declarations
+# first one is simple one, and other is an inline shared which is analogous to unions in C.
+simple_variable_decl = S, type, S, id, S, ";";
+shared_variable_decl = simple_variable_decl {S, "or", S, simple_variable_decl};
+variable_desc = single_variable_decl | shared_variable_decl;
+
+# fixed shape type structures in StAsm
+fixed = "fixed", S, id, S, "{", S
+            variable_decl,
+            {S, compute}
+        S, "}", S, ";";
+
+# shared (union) shapes. All variables share the same memory region.
+# Even though their shape may be selected from a list of possible ones (meaning they can change shapes),
+# their size always remains same (unlike polymorphs).
+shared = "shared",  S, id, S, "{", S
+            (single_variable_decl),  
+         S, "}", S, ";";
+
+# polymorph is a super generalized case of unions (shared) structures.
+# They completely morph their shape and size may vary depending on the expr they morph on.
+polymorph  = "polymorph" , S, id, S, "{", S
+                {variable_decl, S},
+                "morph on", S, expr, S, ";", S
+                {variable_decl, S},
+                ("morph to", S, type, S, "as", S, id, S, "if", S, id, S, "is", S, expr, S, ";"),
+             S, "}"
+
+# bitmaps (enums acting as flags)
+# They expressions assigned to entries in bitmaps are raised to the power of two to compute
+# their actual value.
+bitmap = "bitmap of", S, base_type, S, "as", id, S, "{", S,
+             (S, id, S, "=", S, expr, S, ","),
+         "S", "}", S, ";";
+
+# Enums are your usual enumerations like in C.
+# Unlike bitmaps, their value remains as assgined expr.
+enum = "enum of", S, base_type, S, "as", id, S, "{", S,
+             (S, id, S, "=", S, expr, S, ","),
+       "S", "}", S, ";";
+
+# vectors can specify their size as an expression that can be computed at runtime
+vector = "vector of", S, type, S, "as", S, id, [S, "of size", S, expr], S, ";";
+
+# arrays need to specify their size to be a constant expression before the program runs.
+array = "array of", S, type, S, "as", S, id, S, "of size", S, number, S, ";";
 ```
