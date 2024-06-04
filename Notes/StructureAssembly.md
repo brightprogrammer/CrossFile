@@ -1,5 +1,7 @@
 # Structure Assembly (StAsm)
 
+## This idea failed
+
 This note was created for a quick brainstorming session on a DSL for generating binary
 file format parsers. You describe the structure shapes and compile it to generate a header
 and source file to create an API for reading/writing/pretty-printing the binary file contents.
@@ -99,33 +101,33 @@ polymorph XfJvmRecord {
 /* shared types can be defined separately */
 shared OffsetOrSize {
     /* field inside shared type are separated by "or" or can be written like C unions */
-    Uint32 offset;
-    Size size;
+    read Uint32 offset;
+    read Size size;
 };
 
 /* size and shape of structure is fixed */
 fixed XfOtfTableRecord {
     /* shared types can be inlined as well! but only with the use of "or" */
-    Uint32           tag_value or
-    array of Char as tag_chars of size 4;
+    read Uint32           tag_value or
+    read array of Char as tag_chars of size 4;
 
-    Uint32   checksum;
-    Offset32 offset;
-    Size32   size;
+    read Uint32   checksum;
+    read Offset32 offset;
+    read Size32   size;
 
     assert size is not 0;
     assert tag.tag_value is not 0
 }
 
 fixed XfOtfTableDir {
-    Uint32 sfnt_version;
-    Uint16 num_records;
-    Uint16 search_range;
-    Uint16 entry_selector;
-    Uint16 range_shift;
+    read Uint32 sfnt_version;
+    read Uint16 num_records;
+    read Uint16 search_range;
+    read Uint16 entry_selector;
+    read Uint16 range_shift;
 
     /* instead of providing a compute, we can specify size for automatic loading */
-    vector of XfOtfTableRecord as records of size num_records;
+    read vector of XfOtfTableRecord as records of size num_records;
 
     assert sfnt_version is either 0x00010000 or 0x4f54544f;
     assert num_records is greater than 0;
@@ -146,29 +148,31 @@ bitmap of Uint16 as XfOtfHeadFlags {
 
 /* if READ_SIZE is used, reading this variable struct will require a read of size expr */
 fixed SomeVariableStruct {
-    array of Uint32 as fixed_data of size 128;
-    vector of Uint64 as variable_datra of size READ_SIZE - fixed_data.size;
-}
+    read array of Uint32 as fixed_data of size 128;
+    read vector of Uint64 as variable_datra of size READ_SIZE - fixed_data.size;
+};
 
 enum of Uint16 as XfOtfLanguageId {
     ENGLISH = 0;
 };
 
 fixed XfOtfHead {
-    Uint16 major_version;
-    Uint16 minor_version;
-    Uint32 font_revision;
-    Uint32 checksum_adjustment;
-    Uint32 magic_number;
+    read Uint16 major_version;
+    read Uint16 minor_version;
+    read Uint32 font_revision;
+    read Uint32 checksum_adjustment;
+    read Uint32 magic_number;
 
     assert magic_number is OTF_MAGIC_NUMBER;
 };
 
 fixed XfOtfFile {
-    XfOtfTableDir table_dir;
+    /* All reads are performed in the order in which they appear with computes */
+    /* computed fields are not loaded if there's no read instruction for them in a compute method */
+    read XfOtfTableDir table_dir;
 
-    XfOtfHead head;
-    XfOtfCmap cmap;
+    computed XfOtfHead head;
+    computed XfOtfCmap cmap;
     .
     . (many more fields like this continue)
     .
@@ -270,7 +274,7 @@ variable_desc = single_variable_decl | shared_variable_decl;
 
 # fixed shape type structures in StAsm
 fixed = "fixed", S, id, S, "{", S
-            variable_decl,
+            [read | computed], variable_decl,
             {S, compute},
             {S, insn_assert},
         S, "}", S, ";";

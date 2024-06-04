@@ -158,6 +158,18 @@ struct CodeBlock {
     };
 };
 
+typedef struct Arg {
+    CString       arg_type;
+    AccessedField arg_field;
+    CString       arg_alias;
+} Arg;
+
+typedef struct ArgList {
+    Arg *args;
+    Size arg_count;
+    Size arg_capacity;
+} ArgList;
+
 typedef enum ComputeType {
     COMPUTE_TYPE_UNKNOWN,
     COMPUTE_TYPE_SINGLE,
@@ -173,13 +185,14 @@ typedef struct Compute {
         } for_each;
 
         struct {
-            /* TODO: arglist */
+            ArgList   arg_list;
             CodeBlock block;
         } single;
     };
 } Compute;
 
 typedef struct VarDecl {
+    Bool    is_read; /**< Is this field read or computed? */
     CString type_name;
     CString var_name;
 } VarDecl;
