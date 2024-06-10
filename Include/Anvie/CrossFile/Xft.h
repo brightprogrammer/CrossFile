@@ -43,6 +43,7 @@
 #ifndef ANVIE_CROSSFILE_XFT_H
 #define ANVIE_CROSSFILE_XFT_H
 
+#include <Anvie/Common.h>
 #include <Anvie/Types.h>
 
 typedef struct XfDataStream XfDataStream;
@@ -70,8 +71,8 @@ typedef struct XftTypeLoader XftTypeLoader;
  * */
 typedef struct XftVm XftVm;
 
-Uint8* xft_vm_exec_file_loader (XftVm* vm, XftFileLoader* file_loader, XfDataStream* stream);
-Uint8* xft_vm_exec_type_loader (XftVm* vm, XftTypeLoader* type_loader, XfDataStream* stream);
+PUBLIC Uint8* xft_vm_exec_file_loader (XftVm* vm, XftFileLoader* file_loader, XfDataStream* stream);
+PUBLIC Uint8* xft_vm_exec_type_loader (XftVm* vm, XftTypeLoader* type_loader, XfDataStream* stream);
 
 /* CrossFile Type Definition of a struct. */
 #define XFT_STRUCT(struct_name, struct_def)                                                        \

@@ -71,6 +71,10 @@
 #define ARRAY_SIZE(arr)  sizeof (arr) / sizeof (arr[0])
 #define CHECK_ITER(b, e) (b && e && (b <= e))
 
+/* method annotations */
+#define PRIVATE static inline
+#define PUBLIC
+
 
 
 
