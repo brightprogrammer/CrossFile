@@ -77,12 +77,12 @@ PUBLIC Uint8* xft_vm_exec_type_loader (XftVm* vm, XftTypeLoader* type_loader, Xf
 /* CrossFile Type Definition of a struct. */
 #define XFT_STRUCT(struct_name, struct_def)                                                        \
     typedef struct struct_name struct_def struct_name;                                             \
-    CString                               XF_STRUCT_DEF_STR_##struct_name = "struct " #struct_def
+    CString                               XFT_STRUCT_DESC_STR_##struct_name = "struct " #struct_def
 
 /* CrossFile Type Definition of a union. */
-#define XFT_UNION(struct_name, struct_def)                                                         \
-    typedef struct struct_name struct_def struct_name;                                             \
-    CString                               XF_STRUCT_DEF_STR_##struct_name = "union" #struct_def
+#define XFT_UNION(union_name, union_def)                                                           \
+    typedef union union_name union_def union_name;                                                 \
+    CString                            XFT_UNION_DESC_STR_##union_name = "union" #union_def
 
 /* CrossFile Type Definition to be used inside struct definitons */
 #define XFT_VECTOR(vec_type, vec_name, vec_length) vec_type* vec_name

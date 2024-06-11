@@ -63,3 +63,5 @@ XFT_STRUCT (XfOtfOs2, {
     XFT_IF (version == 5) Uint16 lower_optical_point_size;
     XFT_IF (version == 5) Uint16 upper_optical_point_size;
 });
+
+int main() {}

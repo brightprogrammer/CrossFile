@@ -147,6 +147,56 @@ also for pretty printing.
 In future there can be multiple other annotation macros as well, like, at what address
 should the read be performed.
 
+## Grammar
+
+Below is the EBNF grammar in which type definitions must be provided.
+
+
+```ebnf
+# Spacing is any repetition of following characters
+S = {' ' | '\t' | '\n' | '\f' | '\b'}
+
+# ID is one occurence of _ or characters, then any following non special character
+ID = (_ | [a-z] | [A-Z]), {_ | [0-9] | [a-Z] | [A-Z]}
+
+# Type can be an ID or a fundamental type
+TYPE = Uint8 | Uint16 | Uint32 | Uint64 | Int8 | Int16 | Int32 | Int64 | Size | Char | CString | ID;
+
+# Algebraic expressions
+DIGIT       = [0-9];
+NUMBER      = DIGIT, {DIGIT};
+EXPR_TERM   = NUMBER | EXPR_FACTOR, S, ('+' | '-'), S, EXPR;
+EXPR_FACTOR = NUMBER | EXPR_TERM, S, ('*' | '/'), S, EXPR;
+EXPR_BITOP  = EXPR, S, ('|' | '&' | '^' | '<<' | '>>'), S, EXPR;
+EXPR        = NUMBER | EXPR_TERM | EXPR_FACTOR | EXPR_BITOP | '(' S, EXPR, S, ')';
+
+# Boolean expressions
+EXPR_BIBOOLOPS = COND_EXPR, S, ('||' | '&&'), S, COND_EXPR;
+EXPR_UNBOOLOPS = '!', S, COND_EXPR;
+EXPR_COMPARE   =  EXPR, S, ('==', '>', '>=', '<', '<='), S, EXPR;
+COND_EXPR      = EXPR_COMPARE | EXPR_UNBOOLOPS | EXPR_UNBOOLOPS | '(', S, COND_EXPR, S, ')';
+
+# Annotations that are emtpy and added just before a type declaration
+XFT_IF  = 'XFT_IF', S, '(', S, COND_EXPR, S, ')';
+XFT_DOC = 'XFT_DOC', S, '(', S, \w+,S ')';
+
+# Type annotation
+ANNOTATED_TYPE = ('XFT_VECTOR' | 'XFT_ARRAY'), S, '(', S, TYPE, S, ',', S, ID, S, ',', S, EXPR S, ')';
+
+# Container definitions
+# In struct, XFT_IF is optional
+XFT_STRUCT_MEMBER = [XFT_IF], S, [XFT_DOC], S, ((TYPE, S, ID) | ANNOTATED_TYPE);
+XFT_STRUCT_BODY =  '{', { S, XFT_STRUCT_MEMBER, S, ';' } S, '}';
+XFT_STRUCT = 'XFT_STRUCT', S, '(', S, ID, S, ',', S, XFT_STRUCT_BODY, S, ')';
+
+# In union XFT_IF is necessary for each field
+XFT_UNION_MEMBER = XFT_IF, S, [XFT_DOC], S, ((TYPE, S, ID) | ANNOTATED_TYPE);
+XFT_UNION_BODY =  '{', { S, XFT_UNION_MEMBER, S, ';' } S, '}';
+XFT_UNION = 'XFT_UNION', S, '(', S, ID, S, ',', S, XFT_UNION_BODY, S, ')';
+
+START = XFT_UNION | XFT_STRUCT;
+```
+
 ## Future Scope
 
 Understanding of binary file formats is very important for someone who has to deal
