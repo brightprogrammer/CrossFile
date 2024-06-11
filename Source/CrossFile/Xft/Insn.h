@@ -39,6 +39,8 @@
 typedef enum InsnType : Uint8 {
     INSN_TYPE_UNKNOWN = 0,
 
+    /* TODO : Floating point! */
+
     INSN_TYPE_SET_REG, /* setr reg, imm */
 
     /* read data of different sizes fromd data stream to given register */

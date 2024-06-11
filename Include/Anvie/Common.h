@@ -71,9 +71,17 @@
 #define ARRAY_SIZE(arr)  sizeof (arr) / sizeof (arr[0])
 #define CHECK_ITER(b, e) (b && e && (b <= e))
 
-/* method annotations */
-#define PRIVATE static inline
-#define PUBLIC
+#define HIDDEN  /* functions that are hidden and can be extern-ed to call them */
+#define PUBLIC  /* functions that are public and can be used directly by including a header file */
+#define PRIVATE static inline /* functions not visible outside compilation unit */
+
+#ifdef __cplusplus
+#    define C_SOURCE_BEGIN extern "C" {
+#    define C_SOURCE_END   }
+#else
+#    define C_SOURCE_BEGIN
+#    define C_SOURCE_END
+#endif
 
 
 
@@ -117,6 +125,13 @@
         }                                                                                          \
     } while (0)
 
+#define GOTO_HANDLER_IF_REACHED(handler, ...)                                                      \
+    do {                                                                                           \
+        fputs (__FUNCTION__, stderr);                                                              \
+        fputs (" : " #handler " : ", stderr);                                                      \
+        fprintf (stderr, __VA_ARGS__);                                                             \
+        goto handler;                                                                              \
+    } while (0)
 #define GOTO_HANDLER_IF(cond, handler, ...)                                                        \
     do {                                                                                           \
         if ((cond)) {                                                                              \
