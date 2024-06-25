@@ -1,5 +1,5 @@
 /**
- * @file TypeLoader.h
+ * @file Loader.h
  * @date Mon, 10th June 2024
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright 2024 Siddharth Mishra
@@ -30,15 +30,15 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * */
 
-#ifndef ANVIE_SOURCE_CROSSFILE_XFT_TYPE_LOADER_H
-#define ANVIE_SOURCE_CROSSFILE_XFT_TYPE_LOADER_H
+#ifndef ANVIE_SOURCE_CROSSFILE_XFT_LOADER_H
+#define ANVIE_SOURCE_CROSSFILE_XFT_LOADER_H
 
 #include <Anvie/Common.h>
 #include <Anvie/Types.h>
 
 /* proper renaming to make this compatible with public opaque declarations */
-typedef struct XftTypeLoader XftTypeLoader;
-typedef XftTypeLoader        TypeLoader;
+typedef struct XftLoader XftLoader;
+typedef XftLoader        Loader;
 
 /* this is never exposed locally so can be typedef-ed directly like this. */
 typedef struct InsnBlock InsnBlock;
@@ -51,7 +51,7 @@ typedef struct InsnBlock InsnBlock;
  * call in future. This is just for quick finding of type loader, because a file
  * may have many types and finding the loader in all those arrays "may" be slow.
  * */
-struct XftTypeLoader {
+struct XftLoader {
     CString type_name;              /**< @b Name of type (same as struct name/typedef) */
     CString type_doc;               /**< @b Description of given type */
     Size    alloc_size;             /**< @b Allocation size for a single element of this struct */
@@ -60,9 +60,9 @@ struct XftTypeLoader {
     Size       insn_block_count;    /**< @b Number of basic blocks in this loader. */
     Size       insn_block_capacity; /**< @b Capacity of insn_blocks array */
 
-    TypeLoader **type_loader_refs;  /**< @b References to all type loaders this loader can call. */
-    Size         type_loader_ref_count;    /**< @b Number of references in the references array */
-    Size         type_loader_ref_capacity; /**< @b Capacity of references array */
+    Loader **loader_refs;           /**< @b References to all type loaders this loader can call. */
+    Size     loader_ref_count;      /**< @b Number of references in the references array */
+    Size     loader_ref_capacity;   /**< @b Capacity of references array */
 };
 
-#endif                                     // ANVIE_SOURCE_CROSSFILE_XFT_TYPE_LOADER_H
+#endif                              // ANVIE_SOURCE_CROSSFILE_XFT_LOADER_H

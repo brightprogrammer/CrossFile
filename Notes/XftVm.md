@@ -178,7 +178,7 @@ COND_EXPR      = EXPR_COMPARE | EXPR_UNBOOLOPS | EXPR_UNBOOLOPS | '(', S, COND_E
 
 # Annotations that are emtpy and added just before a type declaration
 XFT_IF  = 'XFT_IF', S, '(', S, COND_EXPR, S, ')';
-XFT_DOC = 'XFT_DOC', S, '(', S, \w+,S ')';
+XFT_DOC = 'XFT_DOC', S, '(', S, \w+, S, ')';
 
 # Type annotation
 ANNOTATED_TYPE = ('XFT_VECTOR' | 'XFT_ARRAY'), S, '(', S, TYPE, S, ',', S, ID, S, ',', S, EXPR S, ')';
@@ -194,7 +194,7 @@ XFT_UNION_MEMBER = XFT_IF, S, [XFT_DOC], S, ((TYPE, S, ID) | ANNOTATED_TYPE);
 XFT_UNION_BODY =  '{', { S, XFT_UNION_MEMBER, S, ';' } S, '}';
 XFT_UNION = 'XFT_UNION', S, '(', S, ID, S, ',', S, XFT_UNION_BODY, S, ')';
 
-START = XFT_UNION | XFT_STRUCT;
+START = S, (XFT_UNION | XFT_STRUCT);
 ```
 
 ## Future Scope

@@ -1,5 +1,5 @@
 /**
- * @file FileLoader.h
+ * @file XftVmStack.h
  * @date Mon, 10th June 2024
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright 2024 Siddharth Mishra
@@ -30,38 +30,32 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * */
 
-
-#ifndef ANVIE_SOURCE_CROSSFILE_XFT_FILE_LOADER_H
-#define ANVIE_SOURCE_CROSSFILE_XFT_FILE_LOADER_H
+#ifndef ANVIE_SOURCE_CROSSFILE_XFT_VM_STACK_H
+#define ANVIE_SOURCE_CROSSFILE_XFT_VM_STACK_H
 
 #include <Anvie/Common.h>
 #include <Anvie/Types.h>
 
-/* proper renaming to make this definition compatible with public
- * opaque struct declaration */
-typedef struct XftFileLoader XftFileLoader;
-typedef XftFileLoader        FileLoader;
-
-typedef struct XftTypeLoader XftTypeLoader;
-typedef XftTypeLoader        TypeLoader;
-
 /**
- * @b One needs to create a file loader to load the whole file.
- * 
- * A file loader contains information about all the types and type laoders,
- * that are required to load the file.
+ * @b XftVmStack is allocated and maintained by the VM.
+ * Each method/function get's a separate stack.
  * */
-struct XftFileLoader {
-    Size main_type_loader_index;
+typedef struct XftVmStack {
+    Uint8* stack_data;
+    Size   stack_size;
+    Size   stack_capacity;
+} XftVmStack;
 
-    TypeLoader* type_loaders;         /**< @b Vector of all type loaders. */
-    Size        type_loader_count;    /**< @b Number of type loaders */
-    Size        type_loader_capacity; /**< @b Maximum capacity of type loader vector */
-};
+PUBLIC XftVmStack* xft_vm_stack_init (XftVmStack* stack);
+PUBLIC XftVmStack* xft_vm_stack_deinit (XftVmStack* stack);
+PUBLIC XftVmStack* xft_vm_stack_check_up (XftVmStack* stack, Size new_size);
+PUBLIC XftVmStack* xft_vm_stack_push_t8 (XftVmStack* stack, Uint8 val);
+PUBLIC XftVmStack* xft_vm_stack_push_t16 (XftVmStack* stack, Uint16 val);
+PUBLIC XftVmStack* xft_vm_stack_push_t32 (XftVmStack* stack, Uint32 val);
+PUBLIC XftVmStack* xft_vm_stack_push_t64 (XftVmStack* stack, Uint64 val);
+PUBLIC XftVmStack* xft_vm_stack_pop_t8 (XftVmStack* stack, Uint8* val);
+PUBLIC XftVmStack* xft_vm_stack_pop_t16 (XftVmStack* stack, Uint16* val);
+PUBLIC XftVmStack* xft_vm_stack_pop_t32 (XftVmStack* stack, Uint32* val);
+PUBLIC XftVmStack* xft_vm_stack_pop_t64 (XftVmStack* stack, Uint64* val);
 
-PRIVATE FileLoader* file_loader_init (FileLoader* floader);
-PRIVATE FileLoader* file_loader_deinit (FileLoader* floader);
-PRIVATE TypeLoader* file_loader_create_new_type_loader (FileLoader* floader);
-
-
-#endif // ANVIE_SOURCE_CROSSFILE_XFT_FILE_LOADER_H
+#endif // ANVIE_SOURCE_CROSSFILE_XFT_VM_STACK_H

@@ -1,5 +1,5 @@
 /**
- * @file TypeLoaderStack.c
+ * @file XftVmStack.c
  * @date Mon, 10th June 2024
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright 2024 Siddharth Mishra
@@ -34,17 +34,17 @@
 #include <memory.h>
 
 /* local includes */
-#include "TypeLoaderStack.h"
+#include "Stack.h"
 
 /**
  * @b Initialize type loader stack for a type loader to being execution.
  *
- * @param[out] stack @c TypeLoaderStack object to be initialized.
+ * @param[out] stack @c XftVmStack object to be initialized.
  *
  * @return @c stack on success.
  * @return @c Null otherwise.
  * */
-PUBLIC TypeLoaderStack* type_loader_stack_init (TypeLoaderStack* stack) {
+PUBLIC XftVmStack* xft_vm_stack_init (XftVmStack* stack) {
     RETURN_VALUE_IF (!stack, Null, ERR_INVALID_ARGUMENTS);
 
     /* if stack is not de-initialized and memory is already allocated then
@@ -66,12 +66,12 @@ PUBLIC TypeLoaderStack* type_loader_stack_init (TypeLoaderStack* stack) {
 /**
  * @b De-initialize type loader stack.
  *
- * @param[out] stack @c TypeLoaderStack object to be de-initialized.
+ * @param[out] stack @c XftVmStack object to be de-initialized.
  *
  * @return @c stack on success.
  * @return @c Null otherwise.
  * */
-PUBLIC TypeLoaderStack* type_loader_stack_deinit (TypeLoaderStack* stack) {
+PUBLIC XftVmStack* xft_vm_stack_deinit (XftVmStack* stack) {
     RETURN_VALUE_IF (!stack, Null, ERR_INVALID_ARGUMENTS);
 
     if (stack->stack_data) {
@@ -80,7 +80,7 @@ PUBLIC TypeLoaderStack* type_loader_stack_deinit (TypeLoaderStack* stack) {
     }
 
     /* invalidate all fields */
-    memset (stack, 0, sizeof (TypeLoaderStack));
+    memset (stack, 0, sizeof (XftVmStack));
 
     return stack;
 }
@@ -100,7 +100,7 @@ PUBLIC TypeLoaderStack* type_loader_stack_deinit (TypeLoaderStack* stack) {
  * @return @c stack on success.
  * @return @c Null otherwise.
  * */
-PUBLIC TypeLoaderStack* type_loader_stack_resize_up (TypeLoaderStack* stack, Size new_size) {
+PUBLIC XftVmStack* xft_vm_stack_resize_up (XftVmStack* stack, Size new_size) {
     RETURN_VALUE_IF (!stack || !new_size, Null, ERR_INVALID_ARGUMENTS);
 
     if (stack->stack_capacity < new_size) {
@@ -115,7 +115,7 @@ PUBLIC TypeLoaderStack* type_loader_stack_resize_up (TypeLoaderStack* stack, Siz
 
 #define TLSTACK_CHECK_AND_RESIZE(stack)                                                            \
     if (stack->stack_size + 8 >= stack->stack_capacity) {                                          \
-        type_loader_stack_resize_up (stack, stack->stack_size ? stack->stack_size * 2 : 32);       \
+        xft_vm_stack_resize_up (stack, stack->stack_size ? stack->stack_size * 2 : 32);            \
     }
 
 #define TLSTACK_PUSH_HELPER(n, stack, val)                                                         \
@@ -131,7 +131,7 @@ PUBLIC TypeLoaderStack* type_loader_stack_resize_up (TypeLoaderStack* stack, Siz
     return stack
 
 #define TLSTACK_PUSHFN_GEN(n)                                                                      \
-    PUBLIC TypeLoaderStack* type_loader_stack_push_t##n (TypeLoaderStack* stack, Uint##n val) {    \
+    PUBLIC XftVmStack* xft_vm_stack_push_t##n (XftVmStack* stack, Uint##n val) {                   \
         TLSTACK_PUSH_HELPER (n, stack, val);                                                       \
     }
 
@@ -145,7 +145,7 @@ TLSTACK_PUSHFN_GEN (64);
 
 #define TLSTACK_POP_HELPER(n, stack, val)                                                          \
     RETURN_VALUE_IF (!stack || !val, Null, ERR_INVALID_ARGUMENTS);                                 \
-    RETURN_VALUE_IF (stack->stack_size < (n >> 3), Null, "XFT VM Stack Underflow Error\n");        \
+    RETURN_VALUE_IF (stack->stack_size < (n >> 3), Null, "XFT VM XftVmStack Underflow Error\n");   \
                                                                                                    \
     /* pop from stack based on size */                                                             \
     stack->stack_size -= n >> 3;                                                                   \
@@ -154,7 +154,7 @@ TLSTACK_PUSHFN_GEN (64);
     return stack
 
 #define TLSTACK_POPFN_GEN(n)                                                                       \
-    PUBLIC TypeLoaderStack* type_loader_stack_pop_t##n (TypeLoaderStack* stack, Uint##n* val) {    \
+    PUBLIC XftVmStack* xft_vm_stack_pop_t##n (XftVmStack* stack, Uint##n* val) {                   \
         TLSTACK_POP_HELPER (n, stack, val);                                                        \
     }
 
