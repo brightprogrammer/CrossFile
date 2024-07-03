@@ -42,58 +42,37 @@
 
 typedef void (*DataStreamClose) (XfDataStream* stream);
 
-typedef Uint8 (*DataStreamReadU8) (XfDataStream* stream);
-typedef Uint16 (*DataStreamReadU16) (XfDataStream* stream);
-typedef Uint32 (*DataStreamReadU32) (XfDataStream* stream);
-typedef Uint64 (*DataStreamReadU64) (XfDataStream* stream);
-
-typedef Int8 (*DataStreamReadI8) (XfDataStream* stream);
-typedef Int16 (*DataStreamReadI16) (XfDataStream* stream);
-typedef Int32 (*DataStreamReadI32) (XfDataStream* stream);
-typedef Int64 (*DataStreamReadI64) (XfDataStream* stream);
-
-typedef CString (*DataStreamReadCString) (XfDataStream* stream, CString buf, Size buf_size);
-
-typedef Uint8* (*DataStreamReadU8Arr) (XfDataStream* stream, Uint8* buf, Size buf_size);
-typedef Uint16* (*DataStreamReadU16Arr) (XfDataStream* stream, Uint16* buf, Size buf_size);
-typedef Uint32* (*DataStreamReadU32Arr) (XfDataStream* stream, Uint32* buf, Size buf_size);
-typedef Uint64* (*DataStreamReadU64Arr) (XfDataStream* stream, Uint64* buf, Size buf_size);
-
-typedef Int8* (*DataStreamReadI8Arr) (XfDataStream* stream, Int8* buf, Size buf_size);
-typedef Int16* (*DataStreamReadI16Arr) (XfDataStream* stream, Int16* buf, Size buf_size);
-typedef Int32* (*DataStreamReadI32Arr) (XfDataStream* stream, Int32* buf, Size buf_size);
-typedef Int64* (*DataStreamReadI64Arr) (XfDataStream* stream, Int64* buf, Size buf_size);
+typedef XfDataStream* (*DataStreamReadT8) (XfDataStream* stream, Uint8* u8);
+typedef XfDataStream* (*DataStreamReadT16) (XfDataStream* stream, Uint16* u16);
+typedef XfDataStream* (*DataStreamReadT32) (XfDataStream* stream, Uint32* u32);
+typedef XfDataStream* (*DataStreamReadT64) (XfDataStream* stream, Uint64* u64);
+typedef XfDataStream* (*DataStreamSeek) (XfDataStream* stream, Int64 off);
+typedef Int64 (*DataStreamGetCursor) (XfDataStream* stream);
+typedef Size (*DataStreamGetSize) (XfDataStream* stream);
+typedef XfDataStream* (*DataStreamReserve) (XfDataStream* stream, Size nb);
+typedef Int64 (*DataStreamGetRemainingSize) (XfDataStream* stream);
 
 typedef struct XfDataStreamCallbacks {
     DataStreamClose close;
 
-    DataStreamReadU8  read_u8;
-    DataStreamReadU16 read_u16;
-    DataStreamReadU32 read_u32;
-    DataStreamReadU64 read_u64;
+    DataStreamReadT8  read_t8;
+    DataStreamReadT16 read_t16;
+    DataStreamReadT32 read_t32;
+    DataStreamReadT64 read_t64;
 
-    DataStreamReadI8  read_i8;
-    DataStreamReadI16 read_i16;
-    DataStreamReadI32 read_i32;
-    DataStreamReadI64 read_i64;
-
-    DataStreamReadCString read_cstring;
-
-    DataStreamReadU8Arr  read_u8_arr;
-    DataStreamReadU16Arr read_u16_arr;
-    DataStreamReadU32Arr read_u32_arr;
-    DataStreamReadU64Arr read_u64_arr;
-
-    DataStreamReadI8Arr  read_i8_arr;
-    DataStreamReadI16Arr read_i16_arr;
-    DataStreamReadI32Arr read_i32_arr;
-    DataStreamReadI64Arr read_i64_arr;
+    DataStreamSeek             seek;
+    DataStreamGetCursor        get_cursor;
+    DataStreamGetSize          get_size;
+    DataStreamReserve          reserve;
+    DataStreamGetRemainingSize get_remaining_size;
 } XfDataStreamCallbacks;
 
 struct XfDataStream {
-    XfByteOrder           byte_order;
     XfDataStreamCallbacks callbacks;
 };
+
+/* just some syntactic sugar to explicitly state the implicit inheritance */
+#define INHERITS_DATA_STREAM() XfDataStream data_stream
 
 #define DATA_STREAM(ptr) ((XfDataStream*)(ptr))
 

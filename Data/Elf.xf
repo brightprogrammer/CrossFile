@@ -1,0 +1,77 @@
+enum ElfVersion : Uint8 {
+    EV_CURRENT = 1
+}
+
+enum ElfClass : Uint8 {
+    ELFCLASS32 = 1            /* 32-bit objects */ 
+    ELFCLASS64 = 2            /* 64-bit objects */ 
+}
+
+enum ElfDataEnc : Uint8 {
+    ELFDATA2LSB = 1           /* 2's complement, little endian */ 
+    ELFDATA2MSB = 2           /* 2's complement, big endian */    
+}
+
+enum ElfOsAbi : Uint8 {
+    ELFOSABI_NONE       = 0            /* UNIX System V ABI */
+    ELFOSABI_SYSV       = 0            /* Alias.  */
+    ELFOSABI_HPUX       = 1            /* HP-UX */
+    ELFOSABI_NETBSD     = 2            /* NetBSD.  */
+    ELFOSABI_GNU        = 3            /* Object uses GNU ELF extensions.  */
+    ELFOSABI_LINUX      = ELFOSABI_GNU /* Compatibility alias.  */
+    ELFOSABI_SOLARIS    = 6            /* Sun Solaris.  */
+    ELFOSABI_AIX        = 7            /* IBM AIX.  */
+    ELFOSABI_IRIX       = 8            /* SGI Irix.  */
+    ELFOSABI_FREEBSD    = 9            /* FreeBSD.  */
+    ELFOSABI_TRU64      = 10           /* Compaq TRU64 UNIX.  */
+    ELFOSABI_MODESTO    = 11           /* Novell Modesto.  */
+    ELFOSABI_OPENBSD    = 12           /* OpenBSD.  */
+    ELFOSABI_ARM_AEABI  = 64           /* ARM EABI */
+    ELFOSABI_ARM        = 97           /* ARM */
+    ELFOSABI_STANDALONE = 255          /* Standalone (embedded) application */
+}
+
+struct ElfIdent {
+    Uint8      ei_magic[4]     :: attributes(hidden)
+    ElfClass   ei_class
+    ElfDataEnc ei_data_enc    
+    ElfVersion ei_version      :: attributes(hidden)
+    ElfOsAbi   ei_os_abi
+    Uint8      ei_abi_version
+    Uint8      ei_pad[7]       :: attributes(hidden, ignore)
+}
+
+constraint ElfClass {
+    ei_magic == [0x7f, 'E', 'L', 'F'];
+}
+
+enum ElfType : Uint16 {
+    ET_NONE   = 0                /* No file type */
+    ET_REL    = 1                /* Relocatable file */
+    ET_EXEC   = 2                /* Executable file */
+    ET_DYN    = 3                /* Shared object file */
+    ET_CORE   = 4                /* Core file */
+    ET_NUM    = 5                /* Number of defined types */
+    0xfe00 <= ET_OS   <= 0xfeff  /* OS-specific range */
+    0xff00 <= ET_PROC <= 0xffff  /* Processor-specific range */
+}
+
+struct ElfHeader32 {
+    ElfIdent e_ident
+    ElfType  e_type   
+}
+
+constraint ElfHeader32 {
+    e_ident.ei_class = ELFCLASS32;
+}
+
+struct ElfHeader64 {
+    ElfIdent e_ident
+    ElfType  e_type
+}
+
+constraint ElfHeader64 {
+    e_ident.ei_class = ELFCLASS64;
+}
+
+file Elf = ElfHeader64 | ElfHeader32;

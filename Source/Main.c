@@ -1,96 +1,47 @@
 #include <Anvie/Common.h>
-#include <Anvie/CrossFile/Xft.h>
+#include <Anvie/CrossFile/Stream.h>
 #include <Anvie/Types.h>
 
-XFT_STRUCT (XfOtfTableRecord, {
-    Uint32 table_tag;
-    Uint32 checksum;
-    Uint32 offset;
+// /**
+//  * @b Skip whitespace starting from given position.
+//  *
+//  * @param begin Begin iterator.
+//  * @param end End iterator.
+//  *
+//  * @return Iterator to character after when first non
+//  *         whitespace character is found on success.
+//  * @return @c Null otherwise.
+//  * */
+// PRIVATE Char* skip_whitespace (Char* begin, Char* end) {
+//     RETURN_VALUE_IF (!begin || !end || begin > end, Null, ERR_INVALID_ARGUMENTS);
+//
+//     /* this means we've completed parsing or there's some error */
+//     if (begin == end) {
+//         return end;
+//     }
+//
+//     Char* iter = begin;
+//     while (iter < begin) {
+//         Char c = *iter;
+//         if (c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\b') {
+//             break;
+//         }
+//     }
+//
+//     return iter;
+// }
 
-    XFT_DOC ("length of table record field")
-    Uint32 length;
-});
+int main (int argc, char** argv) {
+    RETURN_VALUE_IF (argc != 2 || !argv[1], EXIT_FAILURE, "USAGE: %s <file.xf>", argv[0]);
 
-XFT_STRUCT (XfOtfTableDir, {
-    Uint32 sfnt_version;
-    Uint16 num_tables;
-    Uint16 search_range;
-    Uint16 entry_selector;
-    Uint16 range_shift;
-    XFT_VECTOR (XfOtfTableRecord, table_records, num_tables);
-});
+    XfDataStream* stream = xf_data_stream_open_file (argv[1]);
 
-XFT_STRUCT (XfOtfOs2, {
-    Uint16 version;
-    Int16  x_avg_char_width;
-    Uint16 weight_class;
-    Uint16 width_class;
-    Uint16 type;
-    Int16  y_subscript_x_size;
-    Int16  y_subscript_y_size;
-    Int16  y_subscript_x_offset;
-    Int16  y_subscript_y_offset;
-    Int16  y_superscript_x_size;
-    Int16  y_superscript_y_size;
-    Int16  y_superscript_x_offset;
-    Int16  y_superscript_y_offset;
-    Int16  y_strikeout_size;
-    Int16  y_strikeout_position;
-    Int16  family_class;
-    Uint8  panose[10];
-    Uint32 unicode_range[4];
-    Char   vend_id[4];
-    Uint16 selection;
-    Uint16 first_char_index;
-    Uint16 last_char_index;
-    Int16  typo_ascender;
-    Int16  typo_descender;
-    Int16  typo_line_gap;
-    Uint16 win_ascent;
-    Uint16 win_descent;
+    TO_CharVec* str = xf_data_stream_read_seq_char (stream, xf_data_stream_get_size (stream));
+    RETURN_VALUE_IF (!str, EXIT_FAILURE, "Failed to read from file\n");
+    // TODO: printing the charvec directly shows error, check taht please
+    anv_char_vec_destroy (str);
 
-    /* v1 */
-    XFT_IF (version >= 1) Uint32 code_page_range[2];
+    xf_data_stream_close (stream);
 
-    /* v2, v3, v4*/
-    XFT_IF (version >= 2) Int16  x_height;
-    XFT_IF (version >= 2) Int16  cap_height;
-    XFT_IF (version >= 2) Uint16 default_char;
-    XFT_IF (version >= 2) Uint16 break_char;
-    XFT_IF (version >= 2) Uint16 max_context;
-
-    /* v5 */
-    XFT_IF (version == 5) Uint16 lower_optical_point_size;
-    XFT_IF (version == 5) Uint16 upper_optical_point_size;
-});
-
-/**
- * @b Skip whitespace starting from given position.
- *
- * @param begin Begin iterator.
- * @param end End iterator.
- *
- * @return Iterator to character after when first non
- *         whitespace character is found on success.
- * @return @c Null otherwise.
- * */
-PRIVATE Char* skip_whitespace (Char* begin, Char* end) {
-    RETURN_VALUE_IF (!begin || !end || begin > end, Null, ERR_INVALID_ARGUMENTS);
-
-    /* this means we've completed parsing or there's some error */
-    if (begin == end) {
-        return end;
-    }
-
-    Char* iter = begin;
-    while (iter < begin) {
-        Char c = *iter;
-        if (c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\b') {
-            break;
-        }
-    }
-
-    return iter;
+    return EXIT_SUCCESS;
 }
-
-int main() {}

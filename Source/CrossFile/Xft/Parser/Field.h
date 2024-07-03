@@ -36,6 +36,7 @@
 #define ANVIE_CROSSFILE_SOURCE_XFT_FIELD_H
 
 #include <Anvie/Common.h>
+#include <Anvie/CrossFile/Utils/List.h>
 #include <Anvie/Types.h>
 
 /* When TO_ArithExpr is used insted of ArithExpr, this means there's a transfership of ownsership
@@ -49,10 +50,11 @@
  * be called!
  * */
 
-typedef struct ExprOpnd  ExprOpnd, TO_ExprOpnd;
-typedef struct ArithExpr ArithExpr, TO_ArithExpr;
-typedef struct CondExpr  CondExpr, TO_CondExpr;
-typedef struct Field     Field, TO_Field;
+typedef struct ExprOpnd        ExprOpnd, TO_ExprOpnd;
+typedef struct ArithExpr       ArithExpr, TO_ArithExpr;
+typedef struct CondExpr        CondExpr, TO_CondExpr;
+typedef struct Field           Field, TO_Field;
+typedef struct FieldAnnotation FieldAnnotation, TO_FieldAnnotation;
 
 /**
  * Conditional or Arithmetic operand type.
@@ -72,6 +74,7 @@ typedef enum ExprOpndType {
  * */
 struct ExprOpnd {
     ExprOpndType opnd_type;
+
     union {
         Uint64     unsigned_val;
         Int64      signed_val;
@@ -166,14 +169,34 @@ typedef enum FieldType {
 } FieldType;
 
 /**
- * @b Annotation information about field.
+ * @b Annotation information flag bits.
  * */
-typedef enum FieldAnnotation {
-    FIELD_ANNOTATION_NONE = 0,
-    FIELD_ANNOTATION_VECTOR, /**< @b Annotated field is a vector of it's type. */
-    FIELD_ANNOTATION_ARRAY,  /**< @b Annotated field is an array of it's type. */
-    FIELD_ANNOTATION_MAX
-} FieldAnnotation;
+typedef enum FieldAnnotationFlagBits {
+    FIELD_ANNOTATION_FLAG_NONE    = 0,
+    FIELD_ANNOTATION_FLAG_VECTOR  = 1 << 0, /**< @b If exists then field is a vector. */
+    FIELD_ANNOTATION_FLAG_ARRAY   = 1 << 1, /**< @b If exists then field is an array. */
+    FIELD_ANNOTATION_FLAG_DOC_STR = 1 << 2, /**< @b Doc string provided as annotation to field. */
+    FIELD_ANNOTATION_FLAG_EXISTENCE_COND = 1 << 3, /**< @b Condition based on which field exists. */
+    FIELD_ANNOTATION_FLAG_MAX
+} FieldAnnotationFlagBits;
+typedef Uint32 FieldAnnotationFlags;
+
+/**
+ * @b Field annotation information.
+ * */
+struct FieldAnnotation {
+    FieldAnnotationFlagBits annotation_flag;
+
+    union {
+        CString    doc_str;
+        ArithExpr* vec_size;
+        Size       arr_size;
+        CondExpr*  existence_cond;
+    };
+};
+
+/* create a new list type for FieldAnnotation without cloning capability. */
+ANV_MAKE_LIST (FieldAnnotationList, field_annotation, FieldAnnotation, Null, Null);
 
 /**
  * @b Represents a field in a union or a struct.
@@ -183,35 +206,29 @@ struct Field {
     FieldType field_type;
 
     /**
+     * @b Contains struct, union or enum type name if this is a struct/union field.
+     * The corresponding type loader will be found from TypeKnowledge and executed.
+     * */
+    CString type_name;
+
+    /**
      * @b Type member field name.
      * Every field must have it's own unique name.
      * */
     CString field_name;
 
     /**
-     * @b Condition on which this member exists. Null if always exists.
-     * If this expression evaluates to true then this field exists.
+     * @b Hints about annotation fields present in the following linked list.
      * */
-    CondExpr* existence_cond;
-    CString   doc_str; /**< @b If documentation is provied for this member. */
-
-    FieldAnnotation field_annotation;
-    union {
-        ArithExpr* vec_size; /**< @b Expression to compute length of vector. */
-        Size       arr_size; /**< @b Used if array. */
-    } size;
+    FieldAnnotationFlags annotation_flags;
 
     /**
-     * @b Contains struct or union type name if this is a struct/union field.
-     * The corresponding type loader will be found from TypeKnowledge and executed.
+     * @b Linked list of field annotations information.
      * */
-    CString type_name;
-
-    Field* next; /**< Next in the list of fields. */
+    FieldAnnotationList* annotation_list;
 };
 
-TO_Field* field_list_append (Field* head, TO_Field* next);
-void      field_list_pprint (Field* head);
-void      field_list_destroy (Field* head);
+/* create a new list for Field without cloning capability. */
+ANV_MAKE_LIST (FieldList, field, Field, Null, Null);
 
 #endif

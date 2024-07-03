@@ -34,7 +34,6 @@
 
 /* crossfile */
 #include <Anvie/CrossFile/Stream.h>
-#include <Anvie/CrossFile/Struct.h>
 
 /* local includes */
 #include "Stream.h"
@@ -43,8 +42,10 @@
 
 /**
  * @b Close the given file stream.
+ *
+ * @param stream
  * */
-void xf_data_stream_close (XfDataStream *stream) {
+PUBLIC void xf_data_stream_close (XfDataStream* stream) {
     RETURN_IF (!stream, ERR_INVALID_ARGUMENTS);
     RETURN_IF (
         !stream->callbacks.close,
@@ -54,61 +55,137 @@ void xf_data_stream_close (XfDataStream *stream) {
     stream->callbacks.close (stream);
 }
 
-#define GEN_FN(ret_type, type)                                                                     \
-    ret_type xf_data_stream_read_##type (XfDataStream *stream) {                                   \
-        RETURN_VALUE_IF (!stream, ((ret_type)0), ERR_INVALID_ARGUMENTS);                           \
-        RETURN_VALUE_IF (                                                                          \
-            !stream->callbacks.read_##type,                                                        \
-            ((ret_type)0),                                                                         \
-            "Given stream does not have a read_" #type                                             \
-            " method. This might indicate a bug in the application\n"                              \
-        );                                                                                         \
-                                                                                                   \
-        return stream->callbacks.read_##type (stream);                                             \
-    }
+/**
+ * @b Seek to offset from starting of stream. 
+ *
+ * @param stream
+ * @param nb Number of bytes to seek. Parity of value decides direction of seek.
+ *
+ * @return @c stream on success.
+ * @return @c Null otherwise.
+ * */
+PUBLIC XfDataStream* xf_data_stream_seek (XfDataStream* stream, Int64 nb) {
+    RETURN_VALUE_IF (!stream, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (
+        !stream->callbacks.seek,
+        Null,
+        "Given stream does not have a 'set_seek' method. This might indicate a bug in the "
+        "application\n"
+    );
 
-
-GEN_FN (Uint8, u8);
-GEN_FN (Uint16, u16);
-GEN_FN (Uint32, u32);
-GEN_FN (Uint64, u64);
-
-GEN_FN (Int8, i8);
-GEN_FN (Int16, i16);
-GEN_FN (Int32, i32);
-GEN_FN (Int64, i64);
-
-#undef GEN_FN
-
-#define GEN_FN(arr_type, type)                                                                     \
-    arr_type xf_data_stream_read_##type (XfDataStream *stream, arr_type buf, Size buf_size) {      \
-        RETURN_VALUE_IF (!stream || buf || !buf_size, ((arr_type)0), ERR_INVALID_ARGUMENTS);       \
-        RETURN_VALUE_IF (                                                                          \
-            !stream->callbacks.read_##type,                                                        \
-            ((arr_type)0),                                                                         \
-            "Given stream does not have a read_" #type                                             \
-            " method. This might indicate a bug in the application\n"                              \
-        );                                                                                         \
-                                                                                                   \
-        return stream->callbacks.read_##type (stream, buf, buf_size);                              \
-    }
-
-GEN_FN (CString, cstring);
-
-GEN_FN (Uint8 *, u8_arr);
-GEN_FN (Uint16 *, u16_arr);
-GEN_FN (Uint32 *, u32_arr);
-GEN_FN (Uint64 *, u64_arr);
-
-GEN_FN (Int8 *, i8_arr);
-GEN_FN (Int16 *, i16_arr);
-GEN_FN (Int32 *, i32_arr);
-GEN_FN (Int64 *, i64_arr);
-
-#undef GEN_FN
-
-XfByteOrder xf_data_stream_get_byte_order (XfDataStream *stream) {
-    RETURN_VALUE_IF (!stream, XF_BYTE_ORDER_UNKNOWN, ERR_INVALID_ARGUMENTS);
-
-    return stream->byte_order;
+    return stream->callbacks.seek (stream, nb);
 }
+
+/**
+ * @b Get seek offset from starting of stream. 
+ *
+ * @param stream
+ *
+ * @return Non-negative value on success.
+ * @return -1 otherwise.
+ * */
+PUBLIC Int64 xf_data_stream_get_cursor (XfDataStream* stream) {
+    RETURN_VALUE_IF (!stream, -1, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (
+        !stream->callbacks.get_cursor,
+        -1,
+        "Given stream does not have a 'get_cursor' method. This might indicate a bug in the "
+        "application\n"
+    );
+
+    return stream->callbacks.get_cursor (stream);
+}
+
+/**
+ * @b Get total size of stream. 
+ *
+ * @param stream
+ *
+ * @return Non-zero value on success.
+ * @return 0 otherwise.
+ * */
+PUBLIC Int64 xf_data_stream_get_size (XfDataStream* stream) {
+    RETURN_VALUE_IF (!stream, 0, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (
+        !stream->callbacks.get_size,
+        0,
+        "Given stream does not have a 'get_size' method. This might indicate a bug in the "
+        "application\n"
+    );
+
+    return stream->callbacks.get_size (stream);
+}
+
+/**
+ * @b Inform internal stream implementation to reserve this many bytes.
+ * This is recommended in case the size of upcoming stream is knwon.
+ *
+ * @param stream
+ * @param nb Number of bytes to reserve.
+ *
+ * @return @c stream on success.
+ * @return @c Null otherwise.
+ * */
+PUBLIC XfDataStream* xf_data_stream_reserve (XfDataStream* stream, Size nb) {
+    RETURN_VALUE_IF (!stream, 0, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (
+        !stream->callbacks.reserve,
+        0,
+        "Given stream does not have a 'reserve' method. This might indicate a bug in the "
+        "application\n"
+    );
+
+    return stream->callbacks.reserve (stream, nb);
+}
+
+/**
+ * @b Number of bytes left to read.
+ *
+ * @param stream
+ *
+ * @return Non-negative value on success.
+ * @return -1 otherwise.
+ * */
+PUBLIC Int64 xf_data_stream_get_remaining_size (XfDataStream* stream) {
+    RETURN_VALUE_IF (!stream, -1, ERR_INVALID_ARGUMENTS);
+
+    RETURN_VALUE_IF (
+        !stream->callbacks.get_remaining_size,
+        0,
+        "Given stream does not have a 'get_remaining_size' method. This might indicate a bug in "
+        "the application\n"
+    );
+
+    return stream->callbacks.get_remaining_size (stream);
+}
+
+/* helper macros */
+#define GEN_FN(n)                                                                                  \
+    PUBLIC XfDataStream* xf_data_stream_read_t##n (XfDataStream* stream, Uint##n* v) {             \
+        RETURN_VALUE_IF (!stream || !v, Null, ERR_INVALID_ARGUMENTS);                              \
+        RETURN_VALUE_IF (                                                                          \
+            !stream->callbacks.read_t##n,                                                          \
+            Null,                                                                                  \
+            "Given stream does not have a read_t" #n                                               \
+            " method. This might indicate a bug in the application.\n"                             \
+        );                                                                                         \
+                                                                                                   \
+        Uint##n x = 0;                                                                             \
+        RETURN_VALUE_IF (                                                                          \
+            !stream->callbacks.read_t##n (stream, &x),                                             \
+            Null,                                                                                  \
+            "Failed to read " #n "-bit value from given stream.\n"                                 \
+        );                                                                                         \
+                                                                                                   \
+        *v = x;                                                                                    \
+                                                                                                   \
+        return stream;                                                                             \
+    }
+
+
+GEN_FN (8);
+GEN_FN (16);
+GEN_FN (32);
+GEN_FN (64);
+
+#undef GEN_FN

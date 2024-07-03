@@ -43,42 +43,27 @@
 #include "Stream.h"
 
 typedef struct XfFileStream {
-    XfDataStream data_stream;
-    Size         file_size;
-    Uint8*       file_data;
-    CString      file_name;
-    FILE*        file_handle;
-    Size         file_cursor;
+    INHERITS_DATA_STREAM();
+
+    Uint8* file_data;
+    Size   file_size;
+    Size   file_cursor;
+
+    CString file_name;
+    FILE*   file_handle;
 } XfFileStream;
 
-#define FILE_STREAM(ptr) ((XfFileStream*)(ptr))
+#define fstream(ptr) ((XfFileStream*)(ptr))
 
-/**************************************************************************************************/
-/**************************** FILE STREAM PRIVATE METHOD DECLARATIONS *****************************/
-/**************************************************************************************************/
-
-static void    file_stream_close (XfFileStream* stream);
-static Uint8   file_stream_read_u8 (XfFileStream* stream);
-static Uint16  file_stream_read_u16 (XfFileStream* stream);
-static Uint32  file_stream_read_u32 (XfFileStream* stream);
-static Uint64  file_stream_read_u64 (XfFileStream* stream);
-static Int8    file_stream_read_i8 (XfFileStream* stream);
-static Int16   file_stream_read_i16 (XfFileStream* stream);
-static Int32   file_stream_read_i32 (XfFileStream* stream);
-static Int64   file_stream_read_i64 (XfFileStream* stream);
-static CString file_stream_read_cstring (XfFileStream* stream, CString buf, Size buf_size);
-static Uint8*  file_stream_read_u8_arr (XfFileStream* stream, Uint8* buf, Size buf_size);
-static Uint16* file_stream_read_u16_arr (XfFileStream* stream, Uint16* buf, Size buf_size);
-static Uint32* file_stream_read_u32_arr (XfFileStream* stream, Uint32* buf, Size buf_size);
-static Uint64* file_stream_read_u64_arr (XfFileStream* stream, Uint64* buf, Size buf_size);
-static Int8*   file_stream_read_i8_arr (XfFileStream* stream, Int8* buf, Size buf_size);
-static Int16*  file_stream_read_i16_arr (XfFileStream* stream, Int16* buf, Size buf_size);
-static Int32*  file_stream_read_i32_arr (XfFileStream* stream, Int32* buf, Size buf_size);
-static Int64*  file_stream_read_i64_arr (XfFileStream* stream, Int64* buf, Size buf_size);
-
-/**************************************************************************************************/
-/***************************** FILE STREAM PUBLIC METHOD DEFINITIONS ******************************/
-/**************************************************************************************************/
+PRIVATE void          fstream_close (XfFileStream* stream);
+PRIVATE XfFileStream* fstream_read_t8 (XfFileStream* stream, Uint8* u8);
+PRIVATE XfFileStream* fstream_read_t16 (XfFileStream* stream, Uint16* u16);
+PRIVATE XfFileStream* fstream_read_t32 (XfFileStream* stream, Uint32* u32);
+PRIVATE XfFileStream* fstream_read_t64 (XfFileStream* stream, Uint64* u64);
+PRIVATE XfFileStream* fstream_seek (XfFileStream* stream, Int64 off);
+PRIVATE Int64         fstream_get_cursor (XfFileStream* stream);
+PRIVATE Int64         fstream_get_size (XfFileStream* stream);
+PRIVATE Int64         fstream_get_remaining_size (XfFileStream* stream);
 
 /**
  * @b Open a file stream by loading given file and assuming file has given byte-order.
@@ -89,8 +74,8 @@ static Int64*  file_stream_read_i64_arr (XfFileStream* stream, Int64* buf, Size 
  * @return Reference to opened @c XfDataStream on success.
  * @return @ Null otherwise.
  * */
-XfDataStream* xf_data_stream_open_file (CString filename, XfByteOrder byte_order) {
-    RETURN_VALUE_IF (!filename || !byte_order, Null, ERR_INVALID_ARGUMENTS);
+PUBLIC XfDataStream* xf_data_stream_open_file (CString filename) {
+    RETURN_VALUE_IF (!filename, Null, ERR_INVALID_ARGUMENTS);
 
     XfFileStream* fstream = NEW (XfFileStream);
     RETURN_VALUE_IF (!fstream, Null, ERR_OUT_OF_MEMORY);
@@ -127,39 +112,35 @@ XfDataStream* xf_data_stream_open_file (CString filename, XfByteOrder byte_order
     GOTO_HANDLER_IF (!(fstream->file_name = strdup (filename)), INIT_FAILED, ERR_OUT_OF_MEMORY);
 
     XfDataStream* data_stream = DATA_STREAM (fstream);
-    data_stream->byte_order   = byte_order;
 
-    data_stream->callbacks.close        = (DataStreamClose)file_stream_close;
-    data_stream->callbacks.read_u8      = (DataStreamReadU8)file_stream_read_u8;
-    data_stream->callbacks.read_u16     = (DataStreamReadU16)file_stream_read_u16;
-    data_stream->callbacks.read_u32     = (DataStreamReadU32)file_stream_read_u32;
-    data_stream->callbacks.read_u64     = (DataStreamReadU64)file_stream_read_u64;
-    data_stream->callbacks.read_i8      = (DataStreamReadI8)file_stream_read_i8;
-    data_stream->callbacks.read_i16     = (DataStreamReadI16)file_stream_read_i16;
-    data_stream->callbacks.read_i32     = (DataStreamReadI32)file_stream_read_i32;
-    data_stream->callbacks.read_i64     = (DataStreamReadI64)file_stream_read_i64;
-    data_stream->callbacks.read_cstring = (DataStreamReadCString)file_stream_read_cstring;
-    data_stream->callbacks.read_u8_arr  = (DataStreamReadU8Arr)file_stream_read_u8_arr;
-    data_stream->callbacks.read_u16_arr = (DataStreamReadU16Arr)file_stream_read_u16_arr;
-    data_stream->callbacks.read_u32_arr = (DataStreamReadU32Arr)file_stream_read_u32_arr;
-    data_stream->callbacks.read_u64_arr = (DataStreamReadU64Arr)file_stream_read_u64_arr;
-    data_stream->callbacks.read_i8_arr  = (DataStreamReadI8Arr)file_stream_read_i8_arr;
-    data_stream->callbacks.read_i16_arr = (DataStreamReadI16Arr)file_stream_read_i16_arr;
-    data_stream->callbacks.read_i32_arr = (DataStreamReadI32Arr)file_stream_read_i32_arr;
-    data_stream->callbacks.read_i64_arr = (DataStreamReadI64Arr)file_stream_read_i64_arr;
+    data_stream->callbacks.close      = (DataStreamClose)fstream_close;
+    data_stream->callbacks.read_t8    = (DataStreamReadT8)fstream_read_t8;
+    data_stream->callbacks.read_t16   = (DataStreamReadT16)fstream_read_t16;
+    data_stream->callbacks.read_t32   = (DataStreamReadT32)fstream_read_t32;
+    data_stream->callbacks.read_t64   = (DataStreamReadT64)fstream_read_t64;
+    data_stream->callbacks.seek       = (DataStreamSeek)fstream_seek;
+    data_stream->callbacks.get_cursor = (DataStreamGetCursor)fstream_get_cursor;
+    data_stream->callbacks.get_size   = (DataStreamGetSize)fstream_get_size;
+    data_stream->callbacks.get_remaining_size =
+        (DataStreamGetRemainingSize)fstream_get_remaining_size;
+
+    /* NOTE: File stream does not implement a reserve method. Not required as whole file is loaded at once. */
+    data_stream->callbacks.reserve = (DataStreamReserve)Null;
+
 
     return data_stream;
 
 INIT_FAILED:
-    file_stream_close (fstream);
+    fstream_close (fstream);
     return Null;
 }
 
-/**************************************************************************************************/
-/***************************** FILE STREAM PRIVATE METHOD DEFINITIONS *****************************/
-/**************************************************************************************************/
-
-static void file_stream_close (XfFileStream* fstream) {
+/**
+ * @b File stream close implementation.
+ *
+ * @param fstream.
+ * */
+PRIVATE void fstream_close (XfFileStream* fstream) {
     RETURN_IF (!fstream, ERR_INVALID_ARGUMENTS);
 
     if (fstream->file_data) {
@@ -178,96 +159,122 @@ static void file_stream_close (XfFileStream* fstream) {
     FREE (fstream);
 }
 
+/**
+ * @b File Stream seek implementation.
+ * 
+ * @param fstream.
+ * @param off.
+ *
+ * @return @c fstream on success.
+ * @return @c Null otherwise.
+ * */
+PRIVATE XfFileStream* fstream_seek (XfFileStream* fstream, Int64 off) {
+    RETURN_VALUE_IF (!fstream, Null, ERR_INVALID_ARGUMENTS);
 
+    if (off > 0) {
+        Int64 rem_size;
+        RETURN_VALUE_IF (
+            (rem_size = fstream_get_remaining_size (fstream)) == -1,
+            Null,
+            "Failed to get remaining size of stream.\n"
+        );
 
-#define GEN_FN(type, type_caps, suffix)                                                            \
-    static type file_stream_read_##suffix (XfFileStream* fstream) {                                \
-        RETURN_VALUE_IF (!fstream, 0, ERR_INVALID_ARGUMENTS);                                      \
-        RETURN_VALUE_IF (                                                                          \
-            fstream->file_cursor + sizeof (type) >= fstream->file_size,                            \
-            0,                                                                                     \
-            "Not sufficient data in stream to read %zu bytes, available %zu\n",                    \
-            sizeof (type),                                                                         \
-            fstream->file_size >= fstream->file_cursor ?                                           \
-                fstream->file_size - fstream->file_cursor :                                        \
-                0                                                                                  \
-        );                                                                                         \
-        type data;                                                                                 \
-        if (XF_HOST_BYTE_ORDER_IS_LSB && fstream->data_stream.byte_order == XF_BYTE_ORDER_MSB ||   \
-            XF_HOST_BYTE_ORDER_IS_MSB && fstream->data_stream.byte_order == XF_BYTE_ORDER_LSB) {   \
-            data = INVERT_BYTE_ORDER_##type_caps (*((type*)(fstream->file_data +                   \
-                                                            fstream->file_cursor)));               \
-        } else {                                                                                   \
-            data = (*((type*)(fstream->file_data + fstream->file_cursor)));                        \
-        }                                                                                          \
-        fstream->file_cursor += sizeof (type);                                                     \
-        return data;                                                                               \
+        RETURN_VALUE_IF (
+            rem_size < off,
+            Null,
+            "Seek offset exceeds current remaining stream size.\n"
+        );
+    } else if (off < 0) {
+        Int64 cursor;
+        RETURN_VALUE_IF (
+            (cursor = fstream_get_cursor (fstream)) == -1,
+            Null,
+            "Failed to get remaining size of stream.\n"
+        );
+
+        RETURN_VALUE_IF (
+            (cursor + off) < 0,
+            Null,
+            "Seek offset in reverse direction exceeds stream size.\n"
+        );
     }
 
-GEN_FN (Uint8, U8, u8);
-GEN_FN (Uint16, U16, u16);
-GEN_FN (Uint32, U32, u32);
-GEN_FN (Uint64, U64, u64);
-
-GEN_FN (Int8, I8, i8);
-GEN_FN (Int16, I16, i16);
-GEN_FN (Int32, I32, i32);
-GEN_FN (Int64, I64, i64);
-
-#undef GEN_FN
-
-static CString file_stream_read_cstring (XfFileStream* fstream, CString buf, Size buf_size) {
-    RETURN_VALUE_IF (!fstream || !buf || buf_size, ((CString)0), ERR_INVALID_ARGUMENTS);
-    RETURN_VALUE_IF (
-        fstream->file_cursor + sizeof (Char) * buf_size >= fstream->file_size,
-        (CString)0,
-        "Not sufficient data in stream to read %zu bytes, available %zu\n",
-        sizeof (Char) * buf_size,
-        fstream->file_size > fstream->file_cursor ? fstream->file_size - fstream->file_cursor : 0
-    );
-    memcpy ((void*)buf, fstream->file_data, buf_size);
-    return buf;
+    fstream->file_cursor += off;
+    return fstream;
 }
 
-#define GEN_FN(elem_type, type_caps, suffix)                                                       \
-    static elem_type* file_stream_read_##suffix (                                                  \
-        XfFileStream* fstream,                                                                     \
-        elem_type*    buf,                                                                         \
-        Size          buf_size                                                                     \
-    ) {                                                                                            \
-        RETURN_VALUE_IF (!fstream || !buf || buf_size, ((elem_type*)0), ERR_INVALID_ARGUMENTS);    \
+/**
+ * @b File Stream get_cursor implementation.
+ * Get's the current read position in file stream.
+ * 
+ * @param fstream.
+ *
+ * @return Non-negative value on success.
+ * @return -1 otherwise.
+ * */
+PRIVATE Int64 fstream_get_cursor (XfFileStream* fstream) {
+    RETURN_VALUE_IF (!fstream, -1, ERR_INVALID_ARGUMENTS);
+    return fstream->file_cursor;
+}
+
+/**
+ * @b File Stream get_size implementation.
+ * Get's the total size of file loaded by file stream.
+ * 
+ * @param fstream.
+ *
+ * @return Non-negative value on success.
+ * @return -1 otherwise. 0 might mean invalid size as well in some cases.
+ * */
+PRIVATE Int64 fstream_get_size (XfFileStream* fstream) {
+    RETURN_VALUE_IF (!fstream, -1, ERR_INVALID_ARGUMENTS);
+    return fstream->file_size;
+}
+
+PRIVATE Int64 fstream_get_remaining_size (XfFileStream* fstream) {
+    RETURN_VALUE_IF (!fstream, -1, ERR_INVALID_ARGUMENTS);
+
+    Int64 cursor;
+    RETURN_VALUE_IF (
+        (cursor = fstream_get_cursor (fstream)) == -1,
+        -1,
+        "Failed to get cursor from stream.\n"
+    );
+
+    Int64 size;
+    RETURN_VALUE_IF (
+        (size = fstream_get_size (fstream)) == -1,
+        -1,
+        "Failed to get size of stream.\n"
+    );
+
+    return size - cursor;
+}
+
+#define GEN_FN(N)                                                                                  \
+    PRIVATE XfFileStream* fstream_read_t##N (XfFileStream* fstream, Uint##N* v) {                  \
+        RETURN_VALUE_IF (!fstream || !v, Null, ERR_INVALID_ARGUMENTS);                             \
+                                                                                                   \
         RETURN_VALUE_IF (                                                                          \
-            fstream->file_cursor + sizeof (elem_type) * buf_size >= fstream->file_size,            \
-            (elem_type*)0,                                                                         \
-            "Not sufficient data in stream to read %zu bytes, available %zu\n",                    \
-            sizeof (elem_type) * buf_size,                                                         \
-            fstream->file_size > fstream->file_cursor ?                                            \
-                fstream->file_size - fstream->file_cursor :                                        \
-                0                                                                                  \
+            fstream_get_remaining_size (fstream) < (N >> 3),                                       \
+            Null,                                                                                  \
+            "Not enough data left in data stream.\n"                                               \
         );                                                                                         \
-        if (XF_HOST_BYTE_ORDER_IS_LSB && fstream->data_stream.byte_order == XF_BYTE_ORDER_MSB ||   \
-            XF_HOST_BYTE_ORDER_IS_MSB && fstream->data_stream.byte_order == XF_BYTE_ORDER_LSB) {   \
-            for (Size s = 0; s < buf_size; s++) {                                                  \
-                buf[s] = INVERT_BYTE_ORDER_##type_caps (((elem_type*)(fstream->file_data))[s]);         \
-                fstream->file_cursor += sizeof (elem_type);                                        \
-            }                                                                                      \
-        } else {                                                                                   \
-            for (Size s = 0; s < buf_size; s++) {                                                  \
-                buf[s] = (*((elem_type*)(fstream->file_data + fstream->file_cursor)));             \
-                fstream->file_cursor += sizeof (elem_type);                                        \
-            }                                                                                      \
-        }                                                                                          \
-        return buf;                                                                                \
+                                                                                                   \
+        Uint##N x = ((Uint##N*)(fstream->file_data + fstream->file_cursor))[0];                    \
+        RETURN_VALUE_IF (                                                                          \
+            !fstream_seek (fstream, (N >> 3)),                                                     \
+            Null,                                                                                  \
+            "Failed to seek ahead after reading.\n"                                                \
+        );                                                                                         \
+        *v = x;                                                                                    \
+                                                                                                   \
+        return fstream;                                                                            \
     }
 
-GEN_FN (Uint8, U8, u8_arr);
-GEN_FN (Uint16, U16, u16_arr);
-GEN_FN (Uint32, U32, u32_arr);
-GEN_FN (Uint64, U64, u64_arr);
-
-GEN_FN (Int8, I8, i8_arr);
-GEN_FN (Int16, I16, i16_arr);
-GEN_FN (Int32, I32, i32_arr);
-GEN_FN (Int64, I64, i64_arr);
+GEN_FN (8)
+GEN_FN (16)
+GEN_FN (32)
+GEN_FN (64)
 
 #undef GEN_FN

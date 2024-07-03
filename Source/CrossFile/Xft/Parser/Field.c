@@ -117,103 +117,6 @@ void cond_expr_destroy (TO_CondExpr* expr) {
 }
 
 /**
- * @b Append given node to linked list of fields.
- *
- * The given next item is copied as is without any cloning of field members
- * or the object itself. This means when object is provided, the ownsership
- * is transferred to this list.
- *
- * Destroying the given object or any of it's members after append is UB.
- *
- * @param head Head of linked list.
- * @param next Next time to be inserted.
- *
- * @return Pointer to new inserted item on success.
- * @return Null otherwise.
- * */
-Field* field_list_append (Field* head, TO_Field* next) {
-    RETURN_VALUE_IF (!next, Null, ERR_INVALID_ARGUMENTS);
-
-    /* create head if not present, or reset memory */
-    if (!head) {
-        head = NEW (Field);
-        RETURN_VALUE_IF (!head, Null, ERR_OUT_OF_MEMORY);
-    }
-
-    /* find last element */
-    Field* tail = head;
-    while (tail->next) {
-        tail = tail->next;
-    }
-
-    /* insert after last element */
-    tail->next = NEW (Field);
-    memcpy (tail->next, next, sizeof (Field));
-
-    return head;
-}
-
-void field_list_pprint (Field* head) {
-    // TODO: implement recursive method to automaticallty indent
-    // We'll call that pprint_internal
-}
-
-/**
- * @b Destroy the complete linked list.
- *
- * @param head Head of linked list.
- * */
-void field_list_destroy (TO_Field* head) {
-    if (!head) {
-        return;
-    }
-
-    if (head->existence_cond) {
-        cond_expr_destroy (head->existence_cond);
-    }
-
-    if (head->doc_str) {
-        FREE (head->doc_str);
-    }
-
-    if (head->type_name) {
-        FREE (head->type_name);
-    }
-
-    if (head->size.vec_size) {
-        switch (head->field_annotation) {
-            case FIELD_ANNOTATION_ARRAY : {
-                arith_expr_destroy (head->size.vec_size);
-                break;
-            }
-
-            case FIELD_ANNOTATION_VECTOR : {
-                break;
-            }
-
-            default : {
-                PRINT_ERR (
-                    "Invalid Field Annotation for Field = '%s'\n",
-                    head->field_name ? head->field_name : "<INVALID>"
-                );
-                break;
-            }
-        }
-    }
-
-    if (head->field_name) {
-        FREE (head->field_name);
-    }
-
-    if (head->next) {
-        field_list_destroy (head->next);
-    }
-
-    memset (head, 0, sizeof (Field));
-    FREE (head);
-}
-
-/**
  * @b Destroy contents of given @c ExprOpnd object.
  *
  * @param opnd ExprOpnd object to be de-initialized.
@@ -221,7 +124,7 @@ void field_list_destroy (TO_Field* head) {
  * @return @c opnd on success.
  * @return @c Null otherwise.
  * */
-PRIVATE ExprOpnd* expr_opnd_deinit (ExprOpnd* opnd) {
+PRIVATE TO_ExprOpnd* expr_opnd_deinit (TO_ExprOpnd* opnd) {
     RETURN_VALUE_IF (!opnd, Null, ERR_INVALID_ARGUMENTS);
 
     switch (opnd->opnd_type) {
@@ -240,6 +143,7 @@ PRIVATE ExprOpnd* expr_opnd_deinit (ExprOpnd* opnd) {
         }
 
         default :
+            RETURN_VALUE_IF_REACHED (Null, "Invalid expression operand type.\n");
             break;
     }
 
