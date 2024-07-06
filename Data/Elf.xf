@@ -13,36 +13,35 @@ enum ElfDataEnc : Uint8 {
 }
 
 enum ElfOsAbi : Uint8 {
-    ELFOSABI_NONE       = 0            /* UNIX System V ABI */
-    ELFOSABI_SYSV       = 0            /* Alias.  */
-    ELFOSABI_HPUX       = 1            /* HP-UX */
-    ELFOSABI_NETBSD     = 2            /* NetBSD.  */
-    ELFOSABI_GNU        = 3            /* Object uses GNU ELF extensions.  */
-    ELFOSABI_LINUX      = ELFOSABI_GNU /* Compatibility alias.  */
-    ELFOSABI_SOLARIS    = 6            /* Sun Solaris.  */
-    ELFOSABI_AIX        = 7            /* IBM AIX.  */
-    ELFOSABI_IRIX       = 8            /* SGI Irix.  */
-    ELFOSABI_FREEBSD    = 9            /* FreeBSD.  */
-    ELFOSABI_TRU64      = 10           /* Compaq TRU64 UNIX.  */
-    ELFOSABI_MODESTO    = 11           /* Novell Modesto.  */
-    ELFOSABI_OPENBSD    = 12           /* OpenBSD.  */
-    ELFOSABI_ARM_AEABI  = 64           /* ARM EABI */
-    ELFOSABI_ARM        = 97           /* ARM */
-    ELFOSABI_STANDALONE = 255          /* Standalone (embedded) application */
+    ELFOSABI_NONE                = 0         /* UNIX System V ABI */
+    ELFOSABI_SYSV                = 0         /* Alias.  */
+    ELFOSABI_HPUX                = 1         /* HP-UX */
+    ELFOSABI_NETBSD              = 2         /* NetBSD.  */
+    ELFOSABI_LINUX, ELFOSABI_GNU = 3         /* Object uses GNU ELF extensions.  */
+    ELFOSABI_SOLARIS             = 6         /* Sun Solaris.  */
+    ELFOSABI_AIX                 = 7         /* IBM AIX.  */
+    ELFOSABI_IRIX                = 8         /* SGI Irix.  */
+    ELFOSABI_FREEBSD             = 9         /* FreeBSD.  */
+    ELFOSABI_TRU64               = 10        /* Compaq TRU64 UNIX.  */
+    ELFOSABI_MODESTO             = 11        /* Novell Modesto.  */
+    ELFOSABI_OPENBSD             = 12        /* OpenBSD.  */
+    ELFOSABI_ARM_AEABI           = 64        /* ARM EABI */
+    ELFOSABI_ARM                 = 97        /* ARM */
+    ELFOSABI_STANDALONE          = 255       /* Standalone (embedded) application */
 }
 
 struct ElfIdent {
-    Uint8      ei_magic[4]     :: attributes(hidden)
-    ElfClass   ei_class
-    ElfDataEnc ei_data_enc    
-    ElfVersion ei_version      :: attributes(hidden)
-    ElfOsAbi   ei_os_abi
-    Uint8      ei_abi_version
-    Uint8      ei_pad[7]       :: attributes(hidden, ignore)
-}
+    hidden Uint8      magic[4]
+           ElfClass   class
+           ElfDataEnc data_enc    
+    hidden ElfVersion version
+           ElfOsAbi   os_abi
+           Uint8      abi_version
+    hidden Uint8      pad[7]
 
-constraint ElfClass {
-    ei_magic == [0x7f, 'E', 'L', 'F'];
+    @assert {
+        ei_magic == [0x7f, 'E', 'L', 'F']
+    }
 }
 
 enum ElfType : Uint16 {
@@ -57,21 +56,123 @@ enum ElfType : Uint16 {
 }
 
 struct ElfHeader32 {
-    ElfIdent e_ident
-    ElfType  e_type   
-}
-
-constraint ElfHeader32 {
-    e_ident.ei_class = ELFCLASS32;
+           Uint16 type             /* Object file type */
+           Uint16 machine          /* Architecture */
+    hidden Uint32 version          /* Object file version */
+           Uint32 entry            /* Entry point virtual address */
+           Uint32 phoff            /* Program header table file offset */
+           Uint32 shoff            /* SectionHeader header table file offset */
+           Uint32 flags            /* Processor-specific flags */
+    hidden Uint16 ehsize           /* ELF header size in bytes */
+    hidden Uint16 phentsize        /* Program header table entry size */
+           Uint16 phnum            /* Program header table entry count */
+    hidden Uint16 shentsize        /* Section header table entry size */
+           Uint16 shnum            /* Section header table entry count */
+           Uint16 shstrndx         /* Section header string table index */
 }
 
 struct ElfHeader64 {
-    ElfIdent e_ident
-    ElfType  e_type
+           Uint16 type             /* Object file type */
+           Uint16 machine          /* Architecture */
+    hidden Uint32 version          /* Object file version */
+           Uint64 entry            /* Entry point virtual address */
+           Uint64 phoff            /* Program header table file offset */
+           Uint64 shoff            /* Section header table file offset */
+           Uint32 flags            /* Processor-specific flags */
+    hidden Uint16 ehsize           /* ELF header size in bytes */
+    hidden Uint16 phentsize        /* Program header table entry size */
+           Uint16 phnum            /* Program header table entry count */
+    hidden Uint16 shentsize        /* Section header table entry size */
+           Uint16 shnum            /* Section header table entry count */
+           Uint16 shstrndx         /* Section header string table index */
 }
 
-constraint ElfHeader64 {
-    e_ident.ei_class = ELFCLASS64;
+struct ElfSectionHeader32 {
+    Uint32 name      /* Name (string tbl index) */
+    Uint32 type      /* Type */
+    Uint32 flags     /* Flags */
+    Uint32 addr      /* Virtual addr at execution */
+    Uint32 offset    /* File offset */
+    Uint32 size      /* Size in bytes */
+    Uint32 link      /* Link to another section */
+    Uint32 info      /* Additional section information */
+    Uint32 addralign /* Alignment */
+    Uint32 entsize   /* Entry size if section holds table */
+
+    @implicit {
+        Uint8* data($ + offset) /* Data contained by this section */
+    }
 }
 
-file Elf = ElfHeader64 | ElfHeader32;
+struct ElfSectionHeader64 {
+    Uint32 name      /* Name (string tbl index) */
+    Uint32 type      /* Type */
+    Uint64 flags     /* Flags */
+    Uint64 addr      /* Virtual addr at execution */
+    Uint64 offset    /* File offset */
+    Uint64 size      /* Size in bytes */
+    Uint32 link      /* Link to another section */
+    Uint32 info      /* Additional section information */
+    Uint64 addralign /* Alignment */
+    Uint64 entsize   /* Entry size if section holds table */
+
+    @implicit {
+        Uint8* data($ + offset) /* Data contained by this section */
+    }
+}
+
+struct ElfProgramHeader32 {
+    Uint32 type   /* Type */
+    Uint32 offset /* File offset */
+    Uint32 vaddr  /* Virtual address */
+    Uint32 paddr  /* Physical address */
+    Uint32 filesz /* Size in file */
+    Uint32 memsz  /* Size in memory */
+    Uint32 flags  /* Flags */
+    Uint32 align  /* Alignment */
+
+    @implicit {
+        Uint8* data($ + offset) /* Data contained by this segment */
+    }
+}
+
+struct ElfProgramHeader64 {
+    Uint32 type   /* Type */
+    Uint32 flags  /* Flags */
+    Uint64 offset /* File offset */
+    Uint64 vaddr  /* Virtual address */
+    Uint64 paddr  /* Physical address */
+    Uint64 filesz /* Size in file */
+    Uint64 memsz  /* Size in memory */
+    Uint64 align  /* Alignment */
+    
+    @implicit {
+        Uint8* data($ + offset) /* Data contained by this segment */
+    }
+}
+
+/* dependent type for ElfHeader */
+typedef ElfHeader<ElfClass> {
+    ELFCLASS32 : ElfHeader32
+    ELFCLASS64 : ElfHeader64
+}
+
+/* dependent type for ElfSectionHeader */
+typedef ElfSectionHeader<ElfClass> {
+    ELFCLASS32 : ElfSectionHeader32
+    ELFCLASS64 : ElfSectionHeader64
+}
+
+/* dependent type for ElfProgramHeader */
+typedef ElfProgramHeader<ElfClass> {
+    ELFCLASS32 : ElfProgramHeader32
+    ELFCLASS64 : ElfProgramHeader64
+}
+
+file Elf {
+    ElfIdent ident(+0)
+
+    ElfHeader<ident.class>        header(+sizeof(ident))
+    ElfSectionHeader<ident.class> sections[header.shnum](+header.shoff)
+    ElfProgramHeader<ident.class> segments[header.phnum](+header.phoff)
+}

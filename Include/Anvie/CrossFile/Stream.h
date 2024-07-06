@@ -7,7 +7,7 @@
  *
  * Copyright 2024 Siddharth Mishra, Anvie Labs
  * 
- * Redistribution and use in source and binary forms, with or without modification, are permitted 
+ * Redistribution and use in source and binary formio, with or without modification, are permitted 
  * provided that the following conditions are met:
  * 
  * 1. Redistributions of source code must retain the above copyright notice, this list of conditions
@@ -21,7 +21,7 @@
  *    or promote products derived from this software without specific prior written permission.
  * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+ * IMPLIED WARRANTIEio, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
  * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
  * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
@@ -37,243 +37,145 @@
 #include <Anvie/CrossFile/Utils/Vec.h>
 #include <Anvie/Types.h>
 
-/* fwd declarations */
-typedef struct XfStructDesc XfStructDesc;
-
 /**
  * @b A data stream is an opaque abstraction over the data input source.
  *
  * The input can be anything from files to sockets to interprocess communication.
- * As long as an internal stream implementation exists, and the API is followed,
+ * As long as an internal stream implementation existio, and the API is followed,
  * users get a uniform interface to interact and read with any data stream.
  * */
-typedef struct XfDataStream XfDataStream;
+typedef struct IoStream IoStream, TO_IoStream;
 
-/**
- * This is a trick employed to detect host endianness from it's definition.
- * REF : https://stackoverflow.com/a/2103095
- * */
-typedef enum XfByteOrder {
-    XF_BYTE_ORDER_UNKNOWN = 0,
-    XF_BYTE_ORDER_MSB     = 0x00010203, /**< @b Big Endian or most significant byte first. */
-    XF_BYTE_ORDER_LSB     = 0x03020100  /**< @b Little Endian or least significant byte first. */
-} XfByteOrder;
+PUBLIC TO_IoStream* io_stream_open_file (CString filename, Bool is_writable);
+PUBLIC void         io_stream_close (TO_IoStream* stream);
 
-static const union {
-    unsigned char bytes[4];
-    XfByteOrder   value;
-} __host_order__trickster__ = {
-    {0, 1, 2, 3}
-};
+PUBLIC IoStream* io_stream_seek (IoStream* io, Int64 off);
+PUBLIC Int64     io_stream_get_cursor (IoStream* stream);
+PUBLIC IoStream* io_stream_set_cursor (IoStream* io, Size pos);
+PUBLIC Int64     io_stream_get_size (IoStream* stream);
+PUBLIC IoStream* io_stream_reserve (IoStream* io, Size nb);
+PUBLIC Int64     io_stream_get_remaining_size (IoStream* stream);
 
-#define XF_HOST_BYTE_ORDER        (__host_order__trickster__.value)
-#define XF_HOST_BYTE_ORDER_IS_MSB (XF_HOST_BYTE_ORDER == XF_BYTE_ORDER_MSB)
-#define XF_HOST_BYTE_ORDER_IS_LSB (XF_HOST_BYTE_ORDER == XF_BYTE_ORDER_LSB)
+/* readers */
 
-PUBLIC XfDataStream* xf_data_stream_open_file (CString filename);
-PUBLIC void          xf_data_stream_close (XfDataStream* stream);
+PUBLIC IoStream* io_stream_read_bool (IoStream* io, PBool b);
+PUBLIC IoStream* io_stream_read_char (IoStream* io, PChar c);
 
-// TODO:
-PUBLIC XfDataStream* xf_data_stream_seek (XfDataStream* stream, Int64 off);
-PUBLIC Int64         xf_data_stream_get_cursor (XfDataStream* stream);
-PUBLIC Int64         xf_data_stream_get_size (XfDataStream* stream);
-PUBLIC XfDataStream* xf_data_stream_reserve (XfDataStream* stream, Size nb);
-PUBLIC Int64         xf_data_stream_get_remaining_size (XfDataStream* stream);
+PUBLIC IoStream* io_stream_read_u8 (IoStream* io, PUint8 u8);
+PUBLIC IoStream* io_stream_read_u16 (IoStream* io, PUint16 u16);
+PUBLIC IoStream* io_stream_read_u32 (IoStream* io, PUint32 u32);
+PUBLIC IoStream* io_stream_read_u64 (IoStream* io, PUint64 u64);
 
-PUBLIC XfDataStream* xf_data_stream_read_t8 (XfDataStream* stream, Uint8* u8);
-PUBLIC XfDataStream* xf_data_stream_read_t16 (XfDataStream* stream, Uint16* u16);
-PUBLIC XfDataStream* xf_data_stream_read_t32 (XfDataStream* stream, Uint32* u32);
-PUBLIC XfDataStream* xf_data_stream_read_t64 (XfDataStream* stream, Uint64* u64);
+PUBLIC IoStream* io_stream_read_i8 (IoStream* io, PInt8 i8);
+PUBLIC IoStream* io_stream_read_i16 (IoStream* io, PInt16 i16);
+PUBLIC IoStream* io_stream_read_i32 (IoStream* io, PInt32 i32);
+PUBLIC IoStream* io_stream_read_i64 (IoStream* io, PInt64 i64);
 
-/**
- * Helper macro to generate wrapper around _read_tN methods.
- * */
-#define GEN_READER_WRAPPER(Type, t, N)                                                             \
-    PRIVATE XfDataStream* xf_data_stream_read_##t##N (XfDataStream* stream, Type##N* v) {          \
-        RETURN_VALUE_IF (!stream || !v, Null, ERR_INVALID_ARGUMENTS);                              \
-                                                                                                   \
-        Type##N x;                                                                                 \
-        RETURN_VALUE_IF (                                                                          \
-            !xf_data_stream_read_t##N (stream, (Uint##N*)&x),                                      \
-            Null,                                                                                  \
-            "Failed to read " #N "-bit value from data stream.\n"                                  \
-        );                                                                                         \
-                                                                                                   \
-        *v = x;                                                                                    \
-                                                                                                   \
-        return stream;                                                                             \
-    }
+PUBLIC IoStream* io_stream_read_le_u8 (IoStream* io, PUint8 u8);
+PUBLIC IoStream* io_stream_read_le_u16 (IoStream* io, PUint16 u16);
+PUBLIC IoStream* io_stream_read_le_u32 (IoStream* io, PUint32 u32);
+PUBLIC IoStream* io_stream_read_le_u64 (IoStream* io, PUint64 u64);
 
-GEN_READER_WRAPPER (Int, i, 8);
-GEN_READER_WRAPPER (Int, i, 16);
-GEN_READER_WRAPPER (Int, i, 32);
-GEN_READER_WRAPPER (Int, i, 64);
+PUBLIC IoStream* io_stream_read_le_i8 (IoStream* io, PInt8 i8);
+PUBLIC IoStream* io_stream_read_le_i16 (IoStream* io, PInt16 i16);
+PUBLIC IoStream* io_stream_read_le_i32 (IoStream* io, PInt32 i32);
+PUBLIC IoStream* io_stream_read_le_i64 (IoStream* io, PInt64 i64);
 
-GEN_READER_WRAPPER (Uint, u, 8);
-GEN_READER_WRAPPER (Uint, u, 16);
-GEN_READER_WRAPPER (Uint, u, 32);
-GEN_READER_WRAPPER (Uint, u, 64);
+PUBLIC IoStream* io_stream_read_be_u8 (IoStream* io, PUint8 u8);
+PUBLIC IoStream* io_stream_read_be_u16 (IoStream* io, PUint16 u16);
+PUBLIC IoStream* io_stream_read_be_u32 (IoStream* io, PUint32 u32);
+PUBLIC IoStream* io_stream_read_be_u64 (IoStream* io, PUint64 u64);
 
-#undef GEN_READER_WRAPPER
+PUBLIC IoStream* io_stream_read_be_i8 (IoStream* io, PInt8 i8);
+PUBLIC IoStream* io_stream_read_be_i16 (IoStream* io, PInt16 i16);
+PUBLIC IoStream* io_stream_read_be_i32 (IoStream* io, PInt32 i32);
+PUBLIC IoStream* io_stream_read_be_i64 (IoStream* io, PInt64 i64);
 
-PRIVATE XfDataStream* xf_data_stream_read_bool (XfDataStream* stream, Bool* b) {
-    RETURN_VALUE_IF (!stream || !b, Null, ERR_INVALID_ARGUMENTS);
-    RETURN_VALUE_IF (!xf_data_stream_read_u8 (stream, b), Null, "Failed to read Bool.\n");
-    return stream;
-}
+PUBLIC TO_U8Vec*  io_stream_read_seq_u8 (IoStream* io, Size size);
+PUBLIC TO_U16Vec* io_stream_read_seq_u16 (IoStream* io, Size size);
+PUBLIC TO_U32Vec* io_stream_read_seq_u32 (IoStream* io, Size size);
+PUBLIC TO_U64Vec* io_stream_read_seq_u64 (IoStream* io, Size size);
 
-PRIVATE XfDataStream* xf_data_stream_read_char (XfDataStream* stream, Char* c) {
-    RETURN_VALUE_IF (!stream || !c, Null, ERR_INVALID_ARGUMENTS);
-    RETURN_VALUE_IF (!xf_data_stream_read_i8 (stream, (Int8*)c), Null, "Failed to read Bool.\n");
-    return stream;
-}
+PUBLIC TO_I8Vec*  io_stream_read_seq_i8 (IoStream* io, Size size);
+PUBLIC TO_I16Vec* io_stream_read_seq_i16 (IoStream* io, Size size);
+PUBLIC TO_I32Vec* io_stream_read_seq_i32 (IoStream* io, Size size);
+PUBLIC TO_I64Vec* io_stream_read_seq_i64 (IoStream* io, Size size);
 
+PUBLIC TO_U16Vec* io_stream_read_le_seq_u16 (IoStream* io, Size size);
+PUBLIC TO_U32Vec* io_stream_read_le_seq_u32 (IoStream* io, Size size);
+PUBLIC TO_U64Vec* io_stream_read_le_seq_u64 (IoStream* io, Size size);
 
-/**
- * Helper macro to generate wrapper method around native byte order specific readers.
- * */
-#define GEN_BYTE_ORDER_SPECIFIC_READER(TypeN, tn, TN, ORDER, order)                                \
-    PRIVATE XfDataStream* xf_data_stream_read_##order##_##tn (XfDataStream* stream, TypeN* v) {    \
-        RETURN_VALUE_IF (!stream, Null, ERR_INVALID_ARGUMENTS);                                    \
-        TypeN x = 0;                                                                               \
-        RETURN_VALUE_IF (xf_data_stream_read_##tn (stream, &x), Null, "Failed to read " #TypeN);   \
-        x  = XF_HOST_BYTE_ORDER_IS_##ORDER ? x : INVERT_BYTE_ORDER_##TN (x);                       \
-        *v = x;                                                                                    \
-        return stream;                                                                             \
-    }
+PUBLIC TO_I16Vec* io_stream_read_le_seq_i16 (IoStream* io, Size size);
+PUBLIC TO_I32Vec* io_stream_read_le_seq_i32 (IoStream* io, Size size);
+PUBLIC TO_I64Vec* io_stream_read_le_seq_i64 (IoStream* io, Size size);
 
-GEN_BYTE_ORDER_SPECIFIC_READER (Uint16, u16, U16, LSB, le);
-GEN_BYTE_ORDER_SPECIFIC_READER (Uint32, u32, U32, LSB, le);
-GEN_BYTE_ORDER_SPECIFIC_READER (Uint64, u64, U64, LSB, le);
+PUBLIC TO_U16Vec* io_stream_read_be_seq_u16 (IoStream* io, Size size);
+PUBLIC TO_U32Vec* io_stream_read_be_seq_u32 (IoStream* io, Size size);
+PUBLIC TO_U64Vec* io_stream_read_be_seq_u64 (IoStream* io, Size size);
 
-GEN_BYTE_ORDER_SPECIFIC_READER (Int16, i16, I16, LSB, le);
-GEN_BYTE_ORDER_SPECIFIC_READER (Int32, i32, I32, LSB, le);
-GEN_BYTE_ORDER_SPECIFIC_READER (Int64, i64, I64, LSB, le);
+PUBLIC TO_I16Vec* io_stream_read_be_seq_i16 (IoStream* io, Size size);
+PUBLIC TO_I32Vec* io_stream_read_be_seq_i32 (IoStream* io, Size size);
+PUBLIC TO_I64Vec* io_stream_read_be_seq_i64 (IoStream* io, Size size);
 
-GEN_BYTE_ORDER_SPECIFIC_READER (Uint16, u16, U16, MSB, be);
-GEN_BYTE_ORDER_SPECIFIC_READER (Uint32, u32, U32, MSB, be);
-GEN_BYTE_ORDER_SPECIFIC_READER (Uint64, u64, U64, MSB, be);
+/* writers */
 
-GEN_BYTE_ORDER_SPECIFIC_READER (Int16, i16, I16, MSB, be);
-GEN_BYTE_ORDER_SPECIFIC_READER (Int32, i32, I32, MSB, be);
-GEN_BYTE_ORDER_SPECIFIC_READER (Int64, i64, I64, MSB, be);
+PUBLIC IoStream* io_stream_write_bool (IoStream* io, Bool b);
+PUBLIC IoStream* io_stream_write_char (IoStream* io, Char c);
 
-#undef GEN_BYTE_ORDER_SPECIFIC_READER
+PUBLIC IoStream* io_stream_write_u8 (IoStream* io, Uint8 u8);
+PUBLIC IoStream* io_stream_write_u16 (IoStream* io, Uint16 u16);
+PUBLIC IoStream* io_stream_write_u32 (IoStream* io, Uint32 u32);
+PUBLIC IoStream* io_stream_write_u64 (IoStream* io, Uint64 u64);
 
-/* Sequence readers return vectors like this because if we directly take a buffer,
- * and reading fails somewhere in the middle, this might lead to data corruption.
- *
- * This way we make sure all reads are atomic. Either you read whole or you dont!
- *
- * Also, the vectors returned are TO_XYZ types, so ownership is taken by the caller.
- * */
+PUBLIC IoStream* io_stream_write_i8 (IoStream* io, Int8 i8);
+PUBLIC IoStream* io_stream_write_i16 (IoStream* io, Int16 i16);
+PUBLIC IoStream* io_stream_write_i32 (IoStream* io, Int32 i32);
+PUBLIC IoStream* io_stream_write_i64 (IoStream* io, Int64 i64);
 
-#define GEN_SEQ_READER_WAPPER(ItemType, suffix, VecTypeName)                                       \
-    PRIVATE TO_##VecTypeName* xf_data_stream_read_seq_##suffix (                                   \
-        XfDataStream* stream,                                                                      \
-        Size          seq_size                                                                     \
-    ) {                                                                                            \
-        RETURN_VALUE_IF (!stream, Null, ERR_INVALID_ARGUMENTS);                                    \
-        if (!seq_size) {                                                                           \
-            return Null;                                                                           \
-        }                                                                                          \
-                                                                                                   \
-        RETURN_VALUE_IF (                                                                          \
-            xf_data_stream_get_remaining_size (stream) < (Int64)(seq_size * sizeof (ItemType)),    \
-            Null,                                                                                  \
-            "Not enough data left in data stream.\n"                                               \
-        );                                                                                         \
-                                                                                                   \
-        TO_##VecTypeName* seq = anv_##suffix##_vec_create();                                       \
-        anv_##suffix##_vec_reserve (seq, seq_size);                                                \
-        seq->size = seq_size;                                                                      \
-                                                                                                   \
-        /* read into vector */                                                                     \
-        ItemType* iter = Null;                                                                     \
-        ANV_VEC_FOREACH (seq, iter, {                                                              \
-            GOTO_HANDLER_IF (                                                                      \
-                !xf_data_stream_read_##suffix (stream, iter),                                      \
-                READ_SEQ_FAILED,                                                                   \
-                "Failed to read sequence of '" #ItemType "'.\n"                                    \
-            );                                                                                     \
-        });                                                                                        \
-                                                                                                   \
-        return seq;                                                                                \
-                                                                                                   \
-READ_SEQ_FAILED:                                                                                   \
-        anv_##suffix##_vec_destroy (seq);                                                          \
-        return Null;                                                                               \
-    }
+PUBLIC IoStream* io_stream_write_le_u8 (IoStream* io, Uint8 u8);
+PUBLIC IoStream* io_stream_write_le_u16 (IoStream* io, Uint16 u16);
+PUBLIC IoStream* io_stream_write_le_u32 (IoStream* io, Uint32 u32);
+PUBLIC IoStream* io_stream_write_le_u64 (IoStream* io, Uint64 u64);
 
-GEN_SEQ_READER_WAPPER (Char, char, CharVec);
-GEN_SEQ_READER_WAPPER (Uint8, u8, U8Vec);
-GEN_SEQ_READER_WAPPER (Uint16, u16, U16Vec);
-GEN_SEQ_READER_WAPPER (Uint32, u32, U32Vec);
-GEN_SEQ_READER_WAPPER (Uint64, u64, U64Vec);
+PUBLIC IoStream* io_stream_write_le_i8 (IoStream* io, Int8 i8);
+PUBLIC IoStream* io_stream_write_le_i16 (IoStream* io, Int16 i16);
+PUBLIC IoStream* io_stream_write_le_i32 (IoStream* io, Int32 i32);
+PUBLIC IoStream* io_stream_write_le_i64 (IoStream* io, Int64 i64);
 
-GEN_SEQ_READER_WAPPER (Int8, i8, I8Vec);
-GEN_SEQ_READER_WAPPER (Int16, i16, I16Vec);
-GEN_SEQ_READER_WAPPER (Int32, i32, I32Vec);
-GEN_SEQ_READER_WAPPER (Int64, i64, I64Vec);
+PUBLIC IoStream* io_stream_write_be_u8 (IoStream* io, Uint8 u8);
+PUBLIC IoStream* io_stream_write_be_u16 (IoStream* io, Uint16 u16);
+PUBLIC IoStream* io_stream_write_be_u32 (IoStream* io, Uint32 u32);
+PUBLIC IoStream* io_stream_write_be_u64 (IoStream* io, Uint64 u64);
 
-#undef GEN_SEQ_READER_WAPPER
+PUBLIC IoStream* io_stream_write_be_i8 (IoStream* io, Int8 i8);
+PUBLIC IoStream* io_stream_write_be_i16 (IoStream* io, Int16 i16);
+PUBLIC IoStream* io_stream_write_be_i32 (IoStream* io, Int32 i32);
+PUBLIC IoStream* io_stream_write_be_i64 (IoStream* io, Int64 i64);
 
-/** 
- * Helper macro for generation of byte order specific sequence reader wrapper methods.
- * */
-#define GEN_BYTE_ORDER_SPECIFIC_SEQ_READER_WAPPER(ItemType, suffix, VecTypeName, order)            \
-    PRIVATE TO_##VecTypeName* xf_data_stream_read_##order##_seq_##suffix (                         \
-        XfDataStream* stream,                                                                      \
-        Size          seq_size                                                                     \
-    ) {                                                                                            \
-        RETURN_VALUE_IF (!stream, Null, ERR_INVALID_ARGUMENTS);                                    \
-        if (!seq_size) {                                                                           \
-            return Null;                                                                           \
-        }                                                                                          \
-                                                                                                   \
-        RETURN_VALUE_IF (                                                                          \
-            xf_data_stream_get_remaining_size (stream) < (Int64)(seq_size * sizeof (ItemType)),    \
-            Null,                                                                                  \
-            "Not enough data left in data stream.\n"                                               \
-        );                                                                                         \
-                                                                                                   \
-        TO_##VecTypeName* seq = anv_##suffix##_vec_create();                                       \
-        anv_##suffix##_vec_reserve (seq, seq_size);                                                \
-        seq->size = seq_size;                                                                      \
-                                                                                                   \
-        /* read into vector */                                                                     \
-        ItemType* iter = Null;                                                                     \
-        ANV_VEC_FOREACH (seq, iter, {                                                              \
-            GOTO_HANDLER_IF (                                                                      \
-                !xf_data_stream_read_##order##_##suffix (stream, iter),                            \
-                READ_SEQ_FAILED,                                                                   \
-                "Failed to read sequence of '" #ItemType "'.\n"                                    \
-            );                                                                                     \
-        });                                                                                        \
-                                                                                                   \
-        return seq;                                                                                \
-                                                                                                   \
-READ_SEQ_FAILED:                                                                                   \
-        anv_##suffix##_vec_destroy (seq);                                                          \
-        return Null;                                                                               \
-    }
+PUBLIC IoStream* io_stream_write_seq_u8 (IoStream* io, PUint8* d8, Size size);
+PUBLIC IoStream* io_stream_write_seq_u16 (IoStream* io, PUint16* d16, Size size);
+PUBLIC IoStream* io_stream_write_seq_u32 (IoStream* io, PUint32* d32, Size size);
+PUBLIC IoStream* io_stream_write_seq_u64 (IoStream* io, PUint64* d64, Size size);
 
-GEN_BYTE_ORDER_SPECIFIC_SEQ_READER_WAPPER (Uint16, u16, U16Vec, le);
-GEN_BYTE_ORDER_SPECIFIC_SEQ_READER_WAPPER (Uint32, u32, U32Vec, le);
-GEN_BYTE_ORDER_SPECIFIC_SEQ_READER_WAPPER (Uint64, u64, U64Vec, le);
+PUBLIC IoStream* io_stream_write_seq_i8 (IoStream* io, PUint8* d8, Size size);
+PUBLIC IoStream* io_stream_write_seq_i16 (IoStream* io, PUint16* d16, Size size);
+PUBLIC IoStream* io_stream_write_seq_i32 (IoStream* io, PUint32* d32, Size size);
+PUBLIC IoStream* io_stream_write_seq_i64 (IoStream* io, PUint64* d64, Size size);
 
-GEN_BYTE_ORDER_SPECIFIC_SEQ_READER_WAPPER (Int16, i16, I16Vec, le);
-GEN_BYTE_ORDER_SPECIFIC_SEQ_READER_WAPPER (Int32, i32, I32Vec, le);
-GEN_BYTE_ORDER_SPECIFIC_SEQ_READER_WAPPER (Int64, i64, I64Vec, le);
+PUBLIC IoStream* io_stream_write_le_seq_u16 (IoStream* io, PUint16* d16, Size size);
+PUBLIC IoStream* io_stream_write_le_seq_u32 (IoStream* io, PUint32* d32, Size size);
+PUBLIC IoStream* io_stream_write_le_seq_u64 (IoStream* io, PUint64* d64, Size size);
 
-GEN_BYTE_ORDER_SPECIFIC_SEQ_READER_WAPPER (Uint16, u16, U16Vec, be);
-GEN_BYTE_ORDER_SPECIFIC_SEQ_READER_WAPPER (Uint32, u32, U32Vec, be);
-GEN_BYTE_ORDER_SPECIFIC_SEQ_READER_WAPPER (Uint64, u64, U64Vec, be);
+PUBLIC IoStream* io_stream_write_le_seq_i16 (IoStream* io, PUint16* d16, Size size);
+PUBLIC IoStream* io_stream_write_le_seq_i32 (IoStream* io, PUint32* d32, Size size);
+PUBLIC IoStream* io_stream_write_le_seq_i64 (IoStream* io, PUint64* d64, Size size);
 
-GEN_BYTE_ORDER_SPECIFIC_SEQ_READER_WAPPER (Int16, i16, I16Vec, be);
-GEN_BYTE_ORDER_SPECIFIC_SEQ_READER_WAPPER (Int32, i32, I32Vec, be);
-GEN_BYTE_ORDER_SPECIFIC_SEQ_READER_WAPPER (Int64, i64, I64Vec, be);
+PUBLIC IoStream* io_stream_write_be_seq_u16 (IoStream* io, PUint16* d16, Size size);
+PUBLIC IoStream* io_stream_write_be_seq_u32 (IoStream* io, PUint32* d32, Size size);
+PUBLIC IoStream* io_stream_write_be_seq_u64 (IoStream* io, PUint64* d64, Size size);
 
-#undef GEN_BYTE_ORDER_SPECIFIC_SEQ_READER_WAPPER
+PUBLIC IoStream* io_stream_write_be_seq_i16 (IoStream* io, PUint16* d16, Size size);
+PUBLIC IoStream* io_stream_write_be_seq_i32 (IoStream* io, PUint32* d32, Size size);
+PUBLIC IoStream* io_stream_write_be_seq_i64 (IoStream* io, PUint64* d64, Size size);
 
 #endif // ANVIE_CROSSFILE_STREAM_H

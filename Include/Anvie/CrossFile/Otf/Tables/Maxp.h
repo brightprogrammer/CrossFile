@@ -40,7 +40,7 @@
  * use Version 0.5 of this table, specifying only the numGlyphs field. Fonts with TrueType outlines
  * must use Version 1.0 of this table, where all data is required.
  * */
-typedef struct XfOtfMaxp {
+typedef struct OtfMaxp {
     Uint32 version;
     Uint16 num_glyphs;
     Uint16 max_points;
@@ -56,12 +56,12 @@ typedef struct XfOtfMaxp {
     Uint16 max_size_of_instructions;
     Uint16 max_component_elements;
     Uint16 max_component_depth;
-} XfOtfMaxp;
+} OtfMaxp;
 
-#define XF_OTF_MAXP_VERSION_10_DATA_SIZE (sizeof (Uint32) + sizeof (Uint16) * 14)
-#define XF_OTF_MAXP_VERSION_05_DATA_SIZE (sizeof (Uint32) + sizeof (Uint16))
+#define OTF_MAXP_VERSION_10_DATA_SIZE (sizeof (Uint32) + sizeof (Uint16) * 14)
+#define OTF_MAXP_VERSION_05_DATA_SIZE (sizeof (Uint32) + sizeof (Uint16))
 
-XfOtfMaxp* xf_otf_maxp_init (XfOtfMaxp* max_prof, Uint8* data, Size size);
-XfOtfMaxp* xf_otf_maxp_pprint (XfOtfMaxp* max_prof, Uint8 indent_level);
+OtfMaxp* otf_maxp_init (OtfMaxp* max_prof, Uint8* data, Size size);
+OtfMaxp* otf_maxp_pprint (OtfMaxp* max_prof, Uint8 indent_level);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_MAXP_H

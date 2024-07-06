@@ -37,14 +37,14 @@
 
 #include "Anvie/CrossFile/Otf/Tables/Maxp.h"
 
-XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
+OtfFile* otf_file_open (OtfFile* otf_file, CString filename) {
     RETURN_VALUE_IF (!otf_file || !filename, Null, ERR_INVALID_ARGUMENTS);
 
     /* read whole file */
     RETURN_VALUE_IF (!xf_file_open (&otf_file->file, filename), Null, ERR_FILE_OPEN_FAILED);
 
     /* load table directory */
-    xf_otf_table_dir_init (&otf_file->table_directory, otf_file->file.data, otf_file->file.size);
+    otf_table_dir_init (&otf_file->table_directory, otf_file->file.data, otf_file->file.size);
 
     /* if this value is 8 in the end then we've possibly found all the required records
      * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables */
@@ -56,12 +56,12 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
     /* iterate over table records and load known records */
     for (Size s = 0; s < otf_file->table_directory.num_tables; s++) {
         /* get record */
-        XfOtfTableRecord* record = otf_file->table_directory.table_records + s;
+        OtfTableRecord* record = otf_file->table_directory.table_records + s;
 
         switch (record->table_tag) {
-            case XF_OTF_TABLE_TAG_CMAP : {
+            case OTF_TABLE_TAG_CMAP : {
                 GOTO_HANDLER_IF (
-                    !xf_otf_cmap_init (
+                    !otf_cmap_init (
                         &otf_file->cmap,
                         otf_file->file.data + record->offset,
                         record->length
@@ -73,9 +73,9 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
                 break;
             }
 
-            case XF_OTF_TABLE_TAG_HEAD : {
+            case OTF_TABLE_TAG_HEAD : {
                 GOTO_HANDLER_IF (
-                    !xf_otf_head_init (
+                    !otf_head_init (
                         &otf_file->head,
                         otf_file->file.data + record->offset,
                         record->length
@@ -87,9 +87,9 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
                 break;
             }
 
-            case XF_OTF_TABLE_TAG_HHEA : {
+            case OTF_TABLE_TAG_HHEA : {
                 GOTO_HANDLER_IF (
-                    !xf_otf_hhea_init (
+                    !otf_hhea_init (
                         &otf_file->hhea,
                         otf_file->file.data + record->offset,
                         record->length
@@ -101,15 +101,15 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
                 break;
             }
 
-            case XF_OTF_TABLE_TAG_HMTX : {
+            case OTF_TABLE_TAG_HMTX : {
                 hmtx_data      = otf_file->file.data + record->offset;
                 hmtx_data_size = record->length;
                 break;
             }
 
-            case XF_OTF_TABLE_TAG_NAME : {
+            case OTF_TABLE_TAG_NAME : {
                 GOTO_HANDLER_IF (
-                    !xf_otf_name_init (
+                    !otf_name_init (
                         &otf_file->name,
                         otf_file->file.data + record->offset,
                         record->length
@@ -121,9 +121,9 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
                 break;
             }
 
-            case XF_OTF_TABLE_TAG_MAXP : {
+            case OTF_TABLE_TAG_MAXP : {
                 GOTO_HANDLER_IF (
-                    !xf_otf_maxp_init (
+                    !otf_maxp_init (
                         &otf_file->maxp,
                         otf_file->file.data + record->offset,
                         record->length
@@ -149,7 +149,7 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
         );
 
         GOTO_HANDLER_IF (
-            !xf_otf_hmtx_init (
+            !otf_hmtx_init (
                 &otf_file->hmtx,
                 &otf_file->hhea,
                 &otf_file->maxp,
@@ -173,16 +173,16 @@ XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename) {
     return otf_file;
 
 INIT_FAILED:
-    xf_otf_file_close (otf_file);
+    otf_file_close (otf_file);
     return Null;
 }
 
-XfOtfFile* xf_otf_file_close (XfOtfFile* otf_file) {
+OtfFile* otf_file_close (OtfFile* otf_file) {
     RETURN_VALUE_IF (!otf_file, Null, ERR_INVALID_ARGUMENTS);
 
-    xf_otf_name_deinit (&otf_file->name);
-    xf_otf_hmtx_deinit (&otf_file->hmtx);
-    xf_otf_cmap_deinit (&otf_file->cmap);
+    otf_name_deinit (&otf_file->name);
+    otf_hmtx_deinit (&otf_file->hmtx);
+    otf_cmap_deinit (&otf_file->cmap);
 
     if (otf_file->table_directory.table_records) {
         FREE (otf_file->table_directory.table_records);
@@ -190,12 +190,12 @@ XfOtfFile* xf_otf_file_close (XfOtfFile* otf_file) {
 
     xf_file_close (&otf_file->file);
 
-    memset (otf_file, 0, sizeof (XfOtfFile));
+    memset (otf_file, 0, sizeof (OtfFile));
 
     return otf_file;
 }
 
-XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file, Uint8 indent_level) {
+OtfFile* otf_file_pprint (OtfFile* otf_file, Uint8 indent_level) {
     RETURN_VALUE_IF (!otf_file, Null, ERR_INVALID_ARGUMENTS);
 
     /* make sure indent level is atleast 1 always */
@@ -217,13 +217,13 @@ XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file, Uint8 indent_level) {
         otf_file->file.size / 1024.f
     );
 
-    xf_otf_table_dir_pprint (&otf_file->table_directory, indent_level + 1);
-    xf_otf_cmap_pprint (&otf_file->cmap, indent_level + 1);
-    xf_otf_head_pprint (&otf_file->head, indent_level + 1);
-    xf_otf_hhea_pprint (&otf_file->hhea, indent_level + 1);
-    xf_otf_hmtx_pprint (&otf_file->hmtx, indent_level + 1);
-    xf_otf_name_pprint (&otf_file->name, indent_level + 1);
-    xf_otf_maxp_pprint (&otf_file->maxp, indent_level + 1);
+    otf_table_dir_pprint (&otf_file->table_directory, indent_level + 1);
+    otf_cmap_pprint (&otf_file->cmap, indent_level + 1);
+    otf_head_pprint (&otf_file->head, indent_level + 1);
+    otf_hhea_pprint (&otf_file->hhea, indent_level + 1);
+    otf_hmtx_pprint (&otf_file->hmtx, indent_level + 1);
+    otf_name_pprint (&otf_file->name, indent_level + 1);
+    otf_maxp_pprint (&otf_file->maxp, indent_level + 1);
 
     return otf_file;
 }

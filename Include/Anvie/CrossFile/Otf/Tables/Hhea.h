@@ -40,7 +40,7 @@
  *
  * REF :  https://learn.microsoft.com/en-us/typography/opentype/spec/hhea
  * */
-typedef struct XfOtfHhea {
+typedef struct OtfHhea {
     Uint16 major_version;
     Uint16 minor_version;
     Int16  ascender;
@@ -56,9 +56,9 @@ typedef struct XfOtfHhea {
     Int16  reserved[4];
     Int16  metric_data_format;
     Uint16 number_of_h_metrics;
-} XfOtfHhea;
+} OtfHhea;
 
-XfOtfHhea * xf_otf_hhea_init(XfOtfHhea* hhea, Uint8 *data, Size size);
-XfOtfHhea *xf_otf_hhea_pprint(XfOtfHhea *hhea, Uint8 indent_level);
+OtfHhea *otf_hhea_init (OtfHhea *hhea, Uint8 *data, Size size);
+OtfHhea *otf_hhea_pprint (OtfHhea *hhea, Uint8 indent_level);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_HHEA_H

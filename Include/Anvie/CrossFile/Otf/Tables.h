@@ -38,8 +38,8 @@
 #include <Anvie/CrossFile/Otf/Tables/Hhea.h>
 #include <Anvie/CrossFile/Otf/Tables/Hmtx.h>
 #include <Anvie/CrossFile/Otf/Tables/Loca.h>
-#include <Anvie/CrossFile/Otf/Tables/Name.h>
 #include <Anvie/CrossFile/Otf/Tables/Maxp.h>
+#include <Anvie/CrossFile/Otf/Tables/Name.h>
 
 /**
  * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables
@@ -49,45 +49,45 @@
  * anywhwere in the program. That being said, it won't matter much,
  * because everywhere, these enums are recommended.
  * */
-typedef enum XfOtfTableTag : Uint32 {
+typedef enum OtfTableTag : Uint32 {
     /* required for proper functioning of otf files */
-    XF_OTF_TABLE_TAG_CMAP = 0x70616d63, /* cmap */
-    XF_OTF_TABLE_TAG_HEAD = 0x64616568, /* head */
-    XF_OTF_TABLE_TAG_HHEA = 0x61656868, /* hhea */
-    XF_OTF_TABLE_TAG_HMTX = 0x78746d68, /* hmtx */
-    XF_OTF_TABLE_TAG_MAXP = 0x7078616d, /* maxp */
-    XF_OTF_TABLE_TAG_NAME = 0x656d616e, /* name */
-    XF_OTF_TABLE_TAG_OS_2 = 0x325f534f, /* OS/2 */
-    XF_OTF_TABLE_TAG_POST = 0x74736f70, /* post */
+    OTF_TABLE_TAG_CMAP = 0x70616d63, /* cmap */
+    OTF_TABLE_TAG_HEAD = 0x64616568, /* head */
+    OTF_TABLE_TAG_HHEA = 0x61656868, /* hhea */
+    OTF_TABLE_TAG_HMTX = 0x78746d68, /* hmtx */
+    OTF_TABLE_TAG_MAXP = 0x7078616d, /* maxp */
+    OTF_TABLE_TAG_NAME = 0x656d616e, /* name */
+    OTF_TABLE_TAG_OS_2 = 0x325f534f, /* OS/2 */
+    OTF_TABLE_TAG_POST = 0x74736f70, /* post */
 
     /* required for font description */
-    XF_OTF_TABLE_TAG_CVT  = 0x20747663, /* cvt  */
-    XF_OTF_TABLE_TAG_FPGM = 0x6d677066, /* fpgm */
-    XF_OTF_TABLE_TAG_GLYF = 0x66796c67, /* glyf */
-    XF_OTF_TABLE_TAG_LOCA = 0x61636f6c, /* loca */
-    XF_OTF_TABLE_TAG_PREP = 0x70657270, /* prep */
-    XF_OTF_TABLE_TAG_GASP = 0x70736167  /* gasp */
-} XfOtfTableTag;
+    OTF_TABLE_TAG_CVT  = 0x20747663, /* cvt  */
+    OTF_TABLE_TAG_FPGM = 0x6d677066, /* fpgm */
+    OTF_TABLE_TAG_GLYF = 0x66796c67, /* glyf */
+    OTF_TABLE_TAG_LOCA = 0x61636f6c, /* loca */
+    OTF_TABLE_TAG_PREP = 0x70657270, /* prep */
+    OTF_TABLE_TAG_GASP = 0x70736167  /* gasp */
+} OtfTableTag;
 
 /**
  * @b Describes a single table among various other tables in OTF files.
  *
- * The table directory (@c XfOtfTableDir) describes an array
+ * The table directory (@c OtfTableDir) describes an array
  * of this structure.
  *
  * REF: https://learn.microsoft.com/en-us/typography/opentype/spec/otff#table-directory
  * */
-typedef struct XfOtfTableRecord {
-    XfOtfTableTag table_tag;
-    Uint32        checksum;
-    Uint32        offset; /**< @b Offset from beginning of file. */
-    Uint32        length; /**< @b Length of table. */
-} XfOtfTableRecord;
+typedef struct OtfTableRecord {
+    OtfTableTag table_tag;
+    Uint32      checksum;
+    Uint32      offset; /**< @b Offset from beginning of file. */
+    Uint32      length; /**< @b Length of table. */
+} OtfTableRecord;
 
-#define XF_OTF_TABLE_RECORD_DATA_SIZE (sizeof (XfOtfTableTag) + sizeof (Uint32) * 3)
+#define OTF_TABLE_RECORD_DATA_SIZE (sizeof (OtfTableTag) + sizeof (Uint32) * 3)
 
-XfOtfTableRecord* xf_otf_table_record_init (XfOtfTableRecord* record, Uint8* data, Size size);
-XfOtfTableRecord* xf_otf_table_record_pprint (XfOtfTableRecord* record, Uint8 indent_level);
+OtfTableRecord* otf_table_record_init (OtfTableRecord* record, Uint8* data, Size size);
+OtfTableRecord* otf_table_record_pprint (OtfTableRecord* record, Uint8 indent_level);
 
 /**
  * @b Top level struct in OTF files.
@@ -98,20 +98,20 @@ XfOtfTableRecord* xf_otf_table_record_pprint (XfOtfTableRecord* record, Uint8 in
  *
  * REF: https://learn.microsoft.com/en-us/typography/opentype/spec/otff#table-directory
  * */
-typedef struct XfOtfTableDir {
-    Uint32            sfnt_version;
-    Uint16            num_tables;
-    Uint16            search_range;
-    Uint16            entry_selector;
-    Uint16            range_shift;
-    XfOtfTableRecord* table_records;
-} XfOtfTableDir;
+typedef struct OtfTableDir {
+    Uint32          sfnt_version;
+    Uint16          num_tables;
+    Uint16          search_range;
+    Uint16          entry_selector;
+    Uint16          range_shift;
+    OtfTableRecord* table_records;
+} OtfTableDir;
 
-#define XF_OTF_TABLE_DIR_DATA_SIZE (sizeof (Uint16) * 4 + sizeof (Uint32))
+#define OTF_TABLE_DIR_DATA_SIZE (sizeof (Uint16) * 4 + sizeof (Uint32))
 
-XfOtfTableDir*    xf_otf_table_dir_init (XfOtfTableDir* dir, Uint8* data, Size size);
-XfOtfTableDir*    xf_otf_table_dir_deinit (XfOtfTableDir* dir);
-XfOtfTableRecord* xf_otf_table_dir_find_record (XfOtfTableDir* dir, XfOtfTableTag table_tag);
-XfOtfTableDir*    xf_otf_table_dir_pprint (XfOtfTableDir* dir, Uint8 indent_level);
+OtfTableDir*    otf_table_dir_init (OtfTableDir* dir, Uint8* data, Size size);
+OtfTableDir*    otf_table_dir_deinit (OtfTableDir* dir);
+OtfTableRecord* otf_table_dir_find_record (OtfTableDir* dir, OtfTableTag table_tag);
+OtfTableDir*    otf_table_dir_pprint (OtfTableDir* dir, Uint8 indent_level);
 
 #endif // ANVIE_CROSSGUI_OTF_TABLES_H

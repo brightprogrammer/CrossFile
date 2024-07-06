@@ -36,23 +36,23 @@
 #include <Anvie/Types.h>
 
 /* fwd-declarations */
-typedef struct XfOtfHhea XfOtfHhea;
-typedef struct XfOtfMaxp XfOtfMaxp;
+typedef struct OtfHhea OtfHhea;
+typedef struct OtfMaxp OtfMaxp;
 
 /* REF : https://learn.microsoft.com/en-us/typography/opentype/spec/hmtx */
 
-typedef struct XfOtfHmtxLongHorMetric {
+typedef struct OtfHmtxLongHorMetric {
     Uint16 advance_width;
     Int16  left_side_bearing;
-} XfOtfHmtxLongHorMetric;
+} OtfHmtxLongHorMetric;
 
-typedef struct XfOtfHmtx {
+typedef struct OtfHmtx {
     /**
      * @b Custom added field, not in binary file. Dedcued from Hhea table. 
      * */
     Uint16 num_h_metrics;
 
-    XfOtfHmtxLongHorMetric *h_metrics; /**< @b Array of horizontal metrics present in binary file */
+    OtfHmtxLongHorMetric *h_metrics; /**< @b Array of horizontal metrics present in binary file */
 
     /**
      * @b Custom added field, not in binary file. Deduced from Maxp and Hhea tables.
@@ -65,11 +65,10 @@ typedef struct XfOtfHmtx {
      * This is present in binary file.
      * */
     Int16 *left_side_bearings;
-} XfOtfHmtx;
+} OtfHmtx;
 
-XfOtfHmtx *
-    xf_otf_hmtx_init (XfOtfHmtx *hmtx, XfOtfHhea *hhea, XfOtfMaxp *maxp, Uint8 *data, Size size);
-XfOtfHmtx *xf_otf_hmtx_deinit (XfOtfHmtx *hmtx);
-XfOtfHmtx *xf_otf_hmtx_pprint (XfOtfHmtx *hmtx, Uint8 indent_level);
+OtfHmtx *otf_hmtx_init (OtfHmtx *hmtx, OtfHhea *hhea, OtfMaxp *maxp, Uint8 *data, Size size);
+OtfHmtx *otf_hmtx_deinit (OtfHmtx *hmtx);
+OtfHmtx *otf_hmtx_pprint (OtfHmtx *hmtx, Uint8 indent_level);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_HMTX_H

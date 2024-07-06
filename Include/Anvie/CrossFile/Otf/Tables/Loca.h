@@ -36,8 +36,8 @@
 #include <Anvie/Types.h>
 
 /* fwd declarations */
-typedef struct XfOtfHead XfOtfHead;
-typedef struct XfOtfMaxp XfOtfMaxp;
+typedef struct OtfHead OtfHead;
+typedef struct OtfMaxp OtfMaxp;
 
 /**
  * @b Glyphs index into this table to get offset to their glyph
@@ -45,8 +45,8 @@ typedef struct XfOtfMaxp XfOtfMaxp;
  *
  * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/loca
  * */
-typedef struct XfOtfLoca {
-    Uint16 num_glyphs; /**< @b Value copied from @c XfOtfMaxp struct. */
+typedef struct OtfLoca {
+    Uint16 num_glyphs; /**< @b Value copied from @c OtfMaxp struct. */
 
     /**
      * @b @c True if "loca" stores long version offsets. @c False otherwise. 
@@ -57,12 +57,11 @@ typedef struct XfOtfLoca {
         Uint16 *short_version; /**< @b Offsets divided by two is stored. */
         Uint32 *long_version;  /**< @b Actual offset is stored. */
     } offsets;
-} XfOtfLoca;
+} OtfLoca;
 
-#define XF_OTF_LOCA_DATA_SIZE sizeof (Uint16)
+#define OTF_LOCA_DATA_SIZE sizeof (Uint16)
 
-XfOtfLoca *
-    xf_otf_loca_init (XfOtfLoca *loca, XfOtfHead *head, XfOtfMaxp *maxp, Uint8 *data, Size size);
-XfOtfLoca *xf_otf_loca_pprint (XfOtfLoca *loca);
+OtfLoca *otf_loca_init (OtfLoca *loca, OtfHead *head, OtfMaxp *maxp, Uint8 *data, Size size);
+OtfLoca *otf_loca_pprint (OtfLoca *loca);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_LOCA_H

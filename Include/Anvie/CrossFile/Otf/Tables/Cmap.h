@@ -38,54 +38,54 @@
 /* crossfile */
 #include <Anvie/CrossFile/Otf/Tables/Common.h>
 
-typedef struct XfOtfCmapSubHeader {
+typedef struct OtfCmapSubHeader {
     Uint16 first_code;
     Uint16 entry_count;
     Int16  id_delta;
     Uint16 id_range_offset;
-} XfOtfCmapSubHeader;
+} OtfCmapSubHeader;
 
 /**
  * @b Same struct represents both SequentialMapGroup and ConstantMapGroup
  *  */
-typedef struct XfOtfCmapMapGroup {
+typedef struct OtfCmapMapGroup {
     Uint32 start_char_code;
     Uint32 end_char_code;
     union {
         Uint32 glyph_id;
         Uint32 start_glyph_id;
     };
-} XfOtfCmapMapGroup;
+} OtfCmapMapGroup;
 
-typedef struct XfOtfCmapUnicodeRange {
+typedef struct OtfCmapUnicodeRange {
     /* HACK : This union is a hack to emulate uint24 type in C. */
     union {
         Uint8  uint24[3];
         Uint32 start_unicode_value;
     };
     Uint8 additional_count;
-} XfOtfCmapUnicodeRange;
+} OtfCmapUnicodeRange;
 
-typedef struct XfOtfCmapDefaultUVSTable {
-    Uint32                 num_unicode_value_ranges;
-    XfOtfCmapUnicodeRange* ranges;
-} XfOtfCmapDefaultUVSTable;
+typedef struct OtfCmapDefaultUVSTable {
+    Uint32               num_unicode_value_ranges;
+    OtfCmapUnicodeRange* ranges;
+} OtfCmapDefaultUVSTable;
 
-typedef struct XfOtfCmapUVSMaping {
+typedef struct OtfCmapUVSMaping {
     /* HACK : This union is a hack to emulate uint24 type in C. */
     union {
         Uint8  uint24[3];
         Uint32 unicode_value;
     };
     Uint16 glyph_id;
-} XfOtfCmapUVSMapping;
+} OtfCmapUVSMapping;
 
-typedef struct XfOtfCmapNonDefaultUVSTable {
-    Uint32               num_uvs_mappings;
-    XfOtfCmapUVSMapping* uvs_mappings;
-} XfOtfCmapNonDefaultUVSTable;
+typedef struct OtfCmapNonDefaultUVSTable {
+    Uint32             num_uvs_mappings;
+    OtfCmapUVSMapping* uvs_mappings;
+} OtfCmapNonDefaultUVSTable;
 
-typedef struct XfOtfCmapVarSelector {
+typedef struct OtfCmapVarSelector {
     /* HACK: This union is a hack to implement Uint24 type in C. */
     union {
         Uint8  uint24[3];
@@ -94,27 +94,27 @@ typedef struct XfOtfCmapVarSelector {
     Uint32 default_uvs_offset;
     Uint32 non_default_uvs_offset;
 
-    XfOtfCmapDefaultUVSTable    default_uvs_table;
-    XfOtfCmapNonDefaultUVSTable non_default_uvs_table;
-} XfOtfCmapVarSelector;
+    OtfCmapDefaultUVSTable    default_uvs_table;
+    OtfCmapNonDefaultUVSTable non_default_uvs_table;
+} OtfCmapVarSelector;
 
-typedef struct XfOtfCmapSubTableFormat0 {
+typedef struct OtfCmapSubTableFormat0 {
     Uint16 length;
     Uint16 language;
     Uint8  glyph_id_array[256];
-} XfOtfCmapSubTableFormat0;
+} OtfCmapSubTableFormat0;
 
-typedef struct XfOtfCmapSubTableFormat2 {
-    Uint16              length;
-    Uint16              language;
-    Uint16              sub_header_keys[256];
-    Uint16              num_sub_headers; /**< Computed value, not present in binary. */
-    XfOtfCmapSubHeader* sub_headers;     /**< This is an arbitrary sized array acc to spec. */
-    Uint16              num_glyph_ids;   /**< Computed value, not present in binary. */
-    Uint16*             glyph_id_array;  /**< This is an arbitrary sized array acc to spec. */
-} XfOtfCmapSubTableFormat2;
+typedef struct OtfCmapSubTableFormat2 {
+    Uint16            length;
+    Uint16            language;
+    Uint16            sub_header_keys[256];
+    Uint16            num_sub_headers; /**< Computed value, not present in binary. */
+    OtfCmapSubHeader* sub_headers;     /**< This is an arbitrary sized array acc to spec. */
+    Uint16            num_glyph_ids;   /**< Computed value, not present in binary. */
+    Uint16*           glyph_id_array;  /**< This is an arbitrary sized array acc to spec. */
+} OtfCmapSubTableFormat2;
 
-typedef struct XfOtfCmapSubTableFormat4 {
+typedef struct OtfCmapSubTableFormat4 {
     Uint16  length;
     Uint16  language;
     Uint16  seg_count;
@@ -128,67 +128,67 @@ typedef struct XfOtfCmapSubTableFormat4 {
     Uint16* id_range_offsets;
     Uint16  num_glyph_ids;  /**< @b Computed value, not present in binary */
     Uint16* glyph_id_array; /**< @b This is an arbitrary sized array acc to spec. */
-} XfOtfCmapSubTableFormat4;
+} OtfCmapSubTableFormat4;
 
-typedef struct XfOtfCmapSubTableFormat6 {
+typedef struct OtfCmapSubTableFormat6 {
     Uint16  length;
     Uint16  language;
     Uint16  first_code;
     Uint16  entry_count;
     Uint16* glyph_id_array;
-} XfOtfCmapSubTableFormat6;
+} OtfCmapSubTableFormat6;
 
-typedef struct XfOtfCmapSubTableFormat8 {
-    Uint16             reserved;
-    Uint32             length;
-    Uint32             language;
-    Uint8              is32[8192];
-    Uint32             num_groups;
-    XfOtfCmapMapGroup* groups;
-} XfOtfCmapSubTableFormat8;
+typedef struct OtfCmapSubTableFormat8 {
+    Uint16           reserved;
+    Uint32           length;
+    Uint32           language;
+    Uint8            is32[8192];
+    Uint32           num_groups;
+    OtfCmapMapGroup* groups;
+} OtfCmapSubTableFormat8;
 
-typedef struct XfOtfCmapSubTableFormat10 {
+typedef struct OtfCmapSubTableFormat10 {
     Uint16  reserved;
     Uint32  length;
     Uint32  language;
     Uint32  start_char_code;
     Uint32  num_chars;
     Uint16* glyph_id_array;
-} XfOtfCmapSubTableFormat10;
+} OtfCmapSubTableFormat10;
 
-typedef struct XfOtfCmapSubTableFormat12 {
-    Uint16             reserved;
-    Uint32             length;
-    Uint32             language;
-    Uint32             num_groups;
-    XfOtfCmapMapGroup* groups;
-} XfOtfCmapSubTableFormat12, XfOtfCmapSubTableFormat13;
+typedef struct OtfCmapSubTableFormat12 {
+    Uint16           reserved;
+    Uint32           length;
+    Uint32           language;
+    Uint32           num_groups;
+    OtfCmapMapGroup* groups;
+} OtfCmapSubTableFormat12, OtfCmapSubTableFormat13;
 
-typedef struct XfOtfCmapSubTableFormat14 {
-    Uint32                length;
-    Uint32                num_var_selectors;
-    XfOtfCmapVarSelector* var_selectors;
-} XfOtfCmapSubTableFormat14;
+typedef struct OtfCmapSubTableFormat14 {
+    Uint32              length;
+    Uint32              num_var_selectors;
+    OtfCmapVarSelector* var_selectors;
+} OtfCmapSubTableFormat14;
 
 /**
  * @b Definition of different sub tables in cmap table based on format.
  *
  * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/cmap#format-0-byte-encoding-table
  * */
-typedef struct XfOtfCmapSubTable {
+typedef struct OtfCmapSubTable {
     Uint16 format;
     union {
-        XfOtfCmapSubTableFormat0*  format0;
-        XfOtfCmapSubTableFormat2*  format2;
-        XfOtfCmapSubTableFormat4*  format4;
-        XfOtfCmapSubTableFormat6*  format6;
-        XfOtfCmapSubTableFormat8*  format8;
-        XfOtfCmapSubTableFormat10* format10;
-        XfOtfCmapSubTableFormat12* format12;
-        XfOtfCmapSubTableFormat13* format13;
-        XfOtfCmapSubTableFormat14* format14;
+        OtfCmapSubTableFormat0*  format0;
+        OtfCmapSubTableFormat2*  format2;
+        OtfCmapSubTableFormat4*  format4;
+        OtfCmapSubTableFormat6*  format6;
+        OtfCmapSubTableFormat8*  format8;
+        OtfCmapSubTableFormat10* format10;
+        OtfCmapSubTableFormat12* format12;
+        OtfCmapSubTableFormat13* format13;
+        OtfCmapSubTableFormat14* format14;
     };
-} XfOtfCmapSubTable;
+} OtfCmapSubTable;
 
 /**
  * The array of encoding records specifies particular encodings and the offset to the
@@ -196,11 +196,11 @@ typedef struct XfOtfCmapSubTable {
  *
  * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/cmap#encoding-records-and-encodings
  * */
-typedef struct XfOtfCmapEncodingRecord {
-    XfOtfPlatformEncoding platform_encoding;
-    Uint32            sub_table_offset;
-    XfOtfCmapSubTable sub_table;
-} XfOtfCmapEncodingRecord;
+typedef struct OtfCmapEncodingRecord {
+    OtfPlatformEncoding platform_encoding;
+    Uint32              sub_table_offset;
+    OtfCmapSubTable     sub_table;
+} OtfCmapEncodingRecord;
 
 /**
  * @b This table defines the mapping of character codes to the glyph index values used in the font.
@@ -208,14 +208,14 @@ typedef struct XfOtfCmapEncodingRecord {
  *
  * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/cmap#cmap-header
  * */
-typedef struct XfOtfCmap {
-    Uint16                   version;
-    Uint16                   num_tables;
-    XfOtfCmapEncodingRecord* encoding_records;
-} XfOtfCmap;
+typedef struct OtfCmap {
+    Uint16                 version;
+    Uint16                 num_tables;
+    OtfCmapEncodingRecord* encoding_records;
+} OtfCmap;
 
-XfOtfCmap* xf_otf_cmap_init (XfOtfCmap* cmap, Uint8* data, Size size);
-XfOtfCmap* xf_otf_cmap_deinit (XfOtfCmap* cmap);
-XfOtfCmap* xf_otf_cmap_pprint (XfOtfCmap* cmap, Uint8 indent_level);
+OtfCmap* otf_cmap_init (OtfCmap* cmap, Uint8* data, Size size);
+OtfCmap* otf_cmap_deinit (OtfCmap* cmap);
+OtfCmap* otf_cmap_pprint (OtfCmap* cmap, Uint8 indent_level);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_CMAP_H

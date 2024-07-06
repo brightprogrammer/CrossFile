@@ -1,5 +1,5 @@
 /**
- * @file Stream.h
+ * @file ByteStream.c
  * @date Fri, 1st June 2024
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright 2024 Siddharth Mishra
@@ -29,56 +29,63 @@
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * @b Definition of opaque data stream object.
+ * @brief ByteStream is an immutable stream that exists only to wrap byte arrays into streams temporarily.
+ * This is useful when data is coming in form a byte array. The array is owned by the creator of byte stream.
+ * Since byte stream is immutable, when the array is resized, one needs to destroy previous stream and create
+ * a new one with new resized array and new size, and this is a lightweight operation because byte stream does
+ * not allocate anything other than the object itself!
  * */
 
-#ifndef ANVIE_CROSSFILE_SOURCE_IO_STREAM_H
-#define ANVIE_CROSSFILE_SOURCE_IO_STREAM_H
-
-#include <Anvie/Types.h>
+#include <Anvie/Common.h>
 
 /* crossfile */
 #include <Anvie/CrossFile/Stream.h>
 
-typedef void (*IoStreamCloseClbk) (IoStream* io);
+/* libc */
+#include <memory.h>
 
-struct IoStream {
-    PUint8 data;     /**< @b Whenever the stream receives new data, it'll append to this buffer. */
-    Size   size;     /**< @b Current set size of stream. */
-    Size   capacity; /**< @b Reserved capacity of stream. This is max bytes it can hold. */
-    Size   cursor;   /**< @b Points to the next byte to start reading/writing from. */
+/* local includes */
+#include "Stream.h"
 
-    Bool is_mutable; /**< @b Decides whether or not a stream is resizable. */
-
-    /* all callbacks are optional (except close, it's recommended to provide that one) */
-
-    IoStreamCloseClbk close;
-};
-
-/* just some syntactic sugar to explicitly state the implicit inheritance */
-#define INHERITS_IO_STREAM() IoStream stream
-
-#define IO_STREAM(ptr) ((IoStream*)(ptr))
+typedef struct XfByteStream {
+    INHERITS_IO_STREAM();
+} XfByteStream;
 
 /**
- * This is a trick employed to detect host endianness from it's definition.
- * REF : https://stackoverflow.com/a/2103095
+ * @b Close byte stream.
+ *
+ * @param stream
  * */
-typedef enum ByteOrder {
-    BYTE_ORDER_UNKNOWN = 0,
-    BYTE_ORDER_MSB     = 0x00010203, /**< @b Big Endian or most significant byte first. */
-    BYTE_ORDER_LSB     = 0x03020100  /**< @b Little Endian or least significant byte first. */
-} ByteOrder;
+PRIVATE void bstream_close (XfByteStream* stream) {
+    RETURN_IF (!stream, ERR_INVALID_ARGUMENTS);
 
-static const union {
-    unsigned char bytes[4];
-    ByteOrder     value;
-} __host_order__trickster__ = {
-    {0, 1, 2, 3}
-};
+    /* since we don't own any pointer other than object itself, we won't free them. */
+    memset (stream, 0, sizeof (XfByteStream));
+    FREE (stream);
+}
 
-#define HOST_BYTE_ORDER        (__host_order__trickster__.value)
-#define HOST_BYTE_ORDER_IS_MSB (HOST_BYTE_ORDER == BYTE_ORDER_MSB)
-#define HOST_BYTE_ORDER_IS_LSB (HOST_BYTE_ORDER == BYTE_ORDER_LSB)
+/**
+ * @b Open a raw data stream by loading using given data array of given size 
+ *
+ * @param data Raw data to be treated as data stream.
+ * @param data_size 
+ *
+ * @return Reference to opened @c IoStream on success.
+ * @return @ Null otherwise.
+ * */
+IoStream* io_stream_open_byte_seq (PUint8 data, Size data_size) {
+    RETURN_VALUE_IF (!data || !data_size, Null, ERR_INVALID_ARGUMENTS);
 
-#endif // ANVIE_CROSSFILE_SOURCE_IO_STREAM_H
+    XfByteStream* bstream = NEW (XfByteStream);
+    RETURN_VALUE_IF (!bstream, Null, ERR_OUT_OF_MEMORY);
+
+    bstream->stream.data     = data;
+    bstream->stream.size     = data_size;
+    bstream->stream.capacity = data_size;
+
+    IoStream* data_stream   = IO_STREAM (bstream);
+    data_stream->is_mutable = False;
+    data_stream->close      = (IoStreamCloseClbk)bstream_close;
+
+    return data_stream;
+}

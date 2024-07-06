@@ -44,7 +44,7 @@
  *
  * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/os2#ur
  * */
-typedef struct XfOtfOs2 {
+typedef struct OtfOs2 {
     /* v0 */
     Uint16 version;
     Int16  x_avg_char_width;
@@ -87,9 +87,9 @@ typedef struct XfOtfOs2 {
     /* v5 */
     Uint16 lower_optical_point_size;
     Uint16 upper_optical_point_size;
-} XfOtfOs2;
+} OtfOs2;
 
-XfOtfOs2 *xf_otf_os2_init (XfOtfOs2 *os2, Uint8 *data, Size size);
-XfOtfOs2 *xf_otf_os2_pprint (XfOtfOs2 *os2, Uint8 indent_level);
+OtfOs2 *otf_os2_init (OtfOs2 *os2, Uint8 *data, Size size);
+OtfOs2 *otf_os2_pprint (OtfOs2 *os2, Uint8 indent_level);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_OS2_H

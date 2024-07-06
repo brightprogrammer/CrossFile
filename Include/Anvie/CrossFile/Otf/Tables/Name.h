@@ -38,71 +38,71 @@
 /* crossfile */
 #include <Anvie/CrossFile/Otf/Tables/Common.h>
 
-typedef enum XfOtfNameId : Uint16 {
-    XF_OTF_NAME_ID_MIN                               = 0,
-    XF_OTF_NAME_ID_COPYRIGHT_NOTICE                  = 0,
-    XF_OTF_NAME_ID_FONT_FAMILY_NAME                  = 1,
-    XF_OTF_NAME_ID_FONT_SUBFAMILY_NAME               = 2,
-    XF_OTF_NAME_ID_UNIQUE_FONT_IDENTIFIER            = 3,
-    XF_OTF_NAME_ID_FULL_FONT_FAMILY_NAME             = 4,
-    XF_OTF_NAME_ID_VERSION_STRING                    = 5,
-    XF_OTF_NAME_ID_POSTSCRIPT_NAME                   = 6,
-    XF_OTF_NAME_ID_TRADEMARK                         = 7,
-    XF_OTF_NAME_ID_MANUFACTURER_NAME                 = 8,
-    XF_OTF_NAME_ID_DESIGNER_NAME                     = 9,
-    XF_OTF_NAME_ID_DESCRIPTION                       = 10,
-    XF_OTF_NAME_ID_VENDOR_URL                        = 11,
-    XF_OTF_NAME_ID_DESIGNER_URL                      = 12,
-    XF_OTF_NAME_ID_LICENSE                           = 13,
-    XF_OTF_NAME_ID_LICENSE_URL                       = 14,
-    XF_OTF_NAME_ID_RESERVED0                         = 15,
-    XF_OTF_NAME_ID_TYPOGRAPHIC_FAMILY_NAME           = 16,
-    XF_OTF_NAME_ID_TYPOGRAPHIC_SUBFAMILY_NAME        = 17,
-    XF_OTF_NAME_ID_MAC_COMPATIBLE_FULL               = 18,
-    XF_OTF_NAME_ID_SAMPLE_TEXT                       = 19,
-    XF_OTF_NAME_ID_POSTSCRIPT_CID_FONT_NAME          = 20,
-    XF_OTF_NAME_ID_WWS_FAMILY_NAME                   = 21,
-    XF_OTF_NAME_ID_WWS_SUBFAMILY_NAME                = 22,
-    XF_OTF_NAME_ID_LIGHT_BACKGROUND_PALETTE          = 23,
-    XF_OTF_NAME_ID_DARK_BACKGROUND_PALETTE           = 24,
-    XF_OTF_NAME_ID_VARIATIONS_POSTSCRIPT_NAME_PREFIX = 25,
-    XF_OTF_NAME_ID_MAX                               = 25,
-    XF_OTF_NAME_ID_RESERVED_MIN                      = 26,
-    XF_OTF_NAME_ID_RESERVED_MAX                      = 0xffff
-} XfOtfNameId;
+typedef enum OtfNameId : Uint16 {
+    OTF_NAME_ID_MIN                               = 0,
+    OTF_NAME_ID_COPYRIGHT_NOTICE                  = 0,
+    OTF_NAME_ID_FONT_FAMILY_NAME                  = 1,
+    OTF_NAME_ID_FONT_SUBFAMILY_NAME               = 2,
+    OTF_NAME_ID_UNIQUE_FONT_IDENTIFIER            = 3,
+    OTF_NAME_ID_FULL_FONT_FAMILY_NAME             = 4,
+    OTF_NAME_ID_VERSION_STRING                    = 5,
+    OTF_NAME_ID_POSTSCRIPT_NAME                   = 6,
+    OTF_NAME_ID_TRADEMARK                         = 7,
+    OTF_NAME_ID_MANUFACTURER_NAME                 = 8,
+    OTF_NAME_ID_DESIGNER_NAME                     = 9,
+    OTF_NAME_ID_DESCRIPTION                       = 10,
+    OTF_NAME_ID_VENDOR_URL                        = 11,
+    OTF_NAME_ID_DESIGNER_URL                      = 12,
+    OTF_NAME_ID_LICENSE                           = 13,
+    OTF_NAME_ID_LICENSE_URL                       = 14,
+    OTF_NAME_ID_RESERVED0                         = 15,
+    OTF_NAME_ID_TYPOGRAPHIC_FAMILY_NAME           = 16,
+    OTF_NAME_ID_TYPOGRAPHIC_SUBFAMILY_NAME        = 17,
+    OTF_NAME_ID_MAC_COMPATIBLE_FULL               = 18,
+    OTF_NAME_ID_SAMPLE_TEXT                       = 19,
+    OTF_NAME_ID_POSTSCRIPT_CID_FONT_NAME          = 20,
+    OTF_NAME_ID_WWS_FAMILY_NAME                   = 21,
+    OTF_NAME_ID_WWS_SUBFAMILY_NAME                = 22,
+    OTF_NAME_ID_LIGHT_BACKGROUND_PALETTE          = 23,
+    OTF_NAME_ID_DARK_BACKGROUND_PALETTE           = 24,
+    OTF_NAME_ID_VARIATIONS_POSTSCRIPT_NAME_PREFIX = 25,
+    OTF_NAME_ID_MAX                               = 25,
+    OTF_NAME_ID_RESERVED_MIN                      = 26,
+    OTF_NAME_ID_RESERVED_MAX                      = 0xffff
+} OtfNameId;
 
 /* REF : https://learn.microsoft.com/en-us/typography/opentype/spec/name */
 
-typedef struct XfOtfNameRecord {
-    XfOtfPlatformEncoding platform_encoding;
-    XfOtfLanguage         language;
-    XfOtfNameId           name_id;
-    Uint16                length;
-    Uint16                string_offset;
-} XfOtfNameRecord;
+typedef struct OtfNameRecord {
+    OtfPlatformEncoding platform_encoding;
+    OtfLanguage         language;
+    OtfNameId           name_id;
+    Uint16              length;
+    Uint16              string_offset;
+} OtfNameRecord;
 
-typedef struct XfOtfLangTagRecord {
+typedef struct OtfLangTagRecord {
     Uint16 length;
     Uint16 lang_tag_offset;
-} XfOtfLangTagRecord;
+} OtfLangTagRecord;
 
 /**
  * @b A mix of Name V0 and V1. Based on the version information,
  * fields are loaded.
  * */
-typedef struct XfOtfName {
-    Uint16              version;          /* v0, v1 */
-    Uint16              num_name_records; /* v0, v1 */
-    Uint16              storage_offset;   /* v0, v1 */
-    XfOtfNameRecord    *name_records;     /* v0, v1 */
-    Uint16              num_lang_tags;    /* v1 */
-    XfOtfLangTagRecord *lang_tags;        /* v1 */
-    Uint16              string_data_size;
-    Char               *string_data;      /* v0, v1 */
-} XfOtfName;
+typedef struct OtfName {
+    Uint16            version;          /* v0, v1 */
+    Uint16            num_name_records; /* v0, v1 */
+    Uint16            storage_offset;   /* v0, v1 */
+    OtfNameRecord    *name_records;     /* v0, v1 */
+    Uint16            num_lang_tags;    /* v1 */
+    OtfLangTagRecord *lang_tags;        /* v1 */
+    Uint16            string_data_size;
+    Char             *string_data;      /* v0, v1 */
+} OtfName;
 
-XfOtfName *xf_otf_name_init (XfOtfName *name, Uint8 *data, Size size);
-XfOtfName *xf_otf_name_deinit (XfOtfName *name);
-XfOtfName *xf_otf_name_pprint (XfOtfName *name, Uint8 indent_level);
+OtfName *otf_name_init (OtfName *name, Uint8 *data, Size size);
+OtfName *otf_name_deinit (OtfName *name);
+OtfName *otf_name_pprint (OtfName *name, Uint8 indent_level);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_NAME_H

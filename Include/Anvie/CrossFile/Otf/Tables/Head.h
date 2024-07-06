@@ -37,40 +37,40 @@
 
 #define OTF_MAGIC_NUMBER ((Uint32)0x5F0F3CF5)
 
-typedef Uint16 XfOtfMacStyleFlags;
-typedef enum XfOtfMacSyleFlagBits : XfOtfMacStyleFlags {
-    XF_OTF_MAC_STYLE_FLAG_BOLD      = 1 << 0,
-    XF_OTF_MAC_STYLE_FLAG_ITALIC    = 1 << 1,
-    XF_OTF_MAC_STYLE_FLAG_UNDERLINE = 1 << 2,
-    XF_OTF_MAC_STYLE_FLAG_OUTLINE   = 1 << 3,
-    XF_OTF_MAC_STYLE_FLAG_SHADOW    = 1 << 4,
-    XF_OTF_MAC_STYLE_FLAG_CONDENSED = 1 << 5,
-    XF_OTF_MAC_STYLE_FLAG_EXTENDED  = 1 << 6,
-    XF_OTF_MAC_STYLE_FLAG_RESERVED  = 0xf0,
-} XfOtfMacStyleFlagBits;
+typedef Uint16 OtfMacStyleFlags;
+typedef enum OtfMacSyleFlagBits : OtfMacStyleFlags {
+    OTF_MAC_STYLE_FLAG_BOLD      = 1 << 0,
+    OTF_MAC_STYLE_FLAG_ITALIC    = 1 << 1,
+    OTF_MAC_STYLE_FLAG_UNDERLINE = 1 << 2,
+    OTF_MAC_STYLE_FLAG_OUTLINE   = 1 << 3,
+    OTF_MAC_STYLE_FLAG_SHADOW    = 1 << 4,
+    OTF_MAC_STYLE_FLAG_CONDENSED = 1 << 5,
+    OTF_MAC_STYLE_FLAG_EXTENDED  = 1 << 6,
+    OTF_MAC_STYLE_FLAG_RESERVED  = 0xf0,
+} OtfMacStyleFlagBits;
 
-typedef Uint16 XfOtfHeadFlags;
-typedef enum XfOtfHeadFlagBits : XfOtfHeadFlags {
-    XF_OTF_HEAD_FLAG_FONT_BASELINE_Y_EQ_0          = 1 << 0,
-    XF_OTF_HEAD_FLAG_FONT_LEFT_SIDEBAR_X_EQ_0      = 1 << 1,
-    XF_OTF_HEAD_FLAG_INSNS_DEPEND_ON_POINT_SIZE    = 1 << 2,
-    XF_OTF_HEAD_FLAG_FORCE_PPEM_TO_INT             = 1 << 3,
-    XF_OTF_HEAD_FLAG_INSNS_ALTER_ADVANCE_WIDTH     = 1 << 4,
-    XF_OTF_HEAD_FLAG_IGNORE0                       = 0x07e0, /* bits 5 to 10 are ignored in OTF */
-    XF_OTF_HEAD_FLAG_LOSSLESS                      = 1 << 11,
-    XF_OTF_HEAD_FLAG_CONVERTED                     = 1 << 12,
-    XF_OTF_HEAD_FLAG_FONT_OPTIMIZED_FOR_CLEAR_TYPE = 1 << 13,
-    XF_OTF_HEAD_FLAG_LAST_RESORT_FONT              = 1 << 14,
-    XF_OTF_HEAD_FLAG_RESERVED                      = 1 << 15
-} XfOtfHeadFlagBits;
+typedef Uint16 OtfHeadFlags;
+typedef enum OtfHeadFlagBits : OtfHeadFlags {
+    OTF_HEAD_FLAG_FONT_BASELINE_Y_EQ_0          = 1 << 0,
+    OTF_HEAD_FLAG_FONT_LEFT_SIDEBAR_X_EQ_0      = 1 << 1,
+    OTF_HEAD_FLAG_INSNS_DEPEND_ON_POINT_SIZE    = 1 << 2,
+    OTF_HEAD_FLAG_FORCE_PPEM_TO_INT             = 1 << 3,
+    OTF_HEAD_FLAG_INSNS_ALTER_ADVANCE_WIDTH     = 1 << 4,
+    OTF_HEAD_FLAG_IGNORE0                       = 0x07e0, /* bits 5 to 10 are ignored in OTF */
+    OTF_HEAD_FLAG_LOSSLESS                      = 1 << 11,
+    OTF_HEAD_FLAG_CONVERTED                     = 1 << 12,
+    OTF_HEAD_FLAG_FONT_OPTIMIZED_FOR_CLEAR_TYPE = 1 << 13,
+    OTF_HEAD_FLAG_LAST_RESORT_FONT              = 1 << 14,
+    OTF_HEAD_FLAG_RESERVED                      = 1 << 15
+} OtfHeadFlagBits;
 
-typedef enum XfOtfFontDirectionHint : Int16 {
-    XF_OTF_FONT_DIRECTION_HINT_LEFT_TO_RIGHT        = 2,
-    XF_OTF_FONT_DIRECTION_HINT_LEFT_TO_RIGHT_STRONG = 1,
-    XF_OTF_FONT_DIRECTION_HINT_FULLY_MIXED          = 0,
-    XF_OTF_FONT_DIRECTION_HINT_RIGHT_TO_LEFT_STRONG = -1,
-    XF_OTF_FONT_DIRECTION_HINT_RIGHT_TO_LEFT        = -2
-} XfOtfFontDirectionHint;
+typedef enum OtfFontDirectionHint : Int16 {
+    OTF_FONT_DIRECTION_HINT_LEFT_TO_RIGHT        = 2,
+    OTF_FONT_DIRECTION_HINT_LEFT_TO_RIGHT_STRONG = 1,
+    OTF_FONT_DIRECTION_HINT_FULLY_MIXED          = 0,
+    OTF_FONT_DIRECTION_HINT_RIGHT_TO_LEFT_STRONG = -1,
+    OTF_FONT_DIRECTION_HINT_RIGHT_TO_LEFT        = -2
+} OtfFontDirectionHint;
 
 /**
  * @b Font Header Table
@@ -81,33 +81,33 @@ typedef enum XfOtfFontDirectionHint : Int16 {
  * 
  * REF : https://learn.microsoft.com/en-us/typography/opentype/spec/head
  * */
-typedef struct XfOtfHead {
-    Uint16                 major_version; /**< @b Always set to 1 */
-    Uint16                 minor_version; /**< @b Always set to 0 */
-    Uint32                 font_revision; /**< @b Set by font manufacturer. */
-    Uint32                 checksum_adjustment;
-    Uint32                 magic_number;  /**< @b Always set to @c OTF_MAGIC_NUMBER */
-    XfOtfHeadFlags         flags;
-    Uint16                 units_per_em;  /**< @b Some info for rasterizer */
-    Uint64                 created;       /**< @b Number of seconds since Jan 1st 1904 Midnight */
-    Uint64                 modified;      /**< @b Number of seconds since Jan 1st 1904 Midnight */
-    Int16                  x_min; /**< Minimum x coordinate across all glyph bounding boxes. */
-    Int16                  y_min; /**< Minimum y coordinate across all glyph bounding boxes. */
-    Int16                  x_max; /**< Maximum x coordinate across all glyph bounding boxes. */
-    Int16                  y_max; /**< Maximum y coordinate across all glyph bounding boxes. */
-    XfOtfMacStyleFlags     mac_style;
-    Uint16                 lowest_rec_ppem;     /**< @b Smallest readable size in pixels */
-    XfOtfFontDirectionHint font_direction_hint; /**< @b Deprecated (always set to 2). */
+typedef struct OtfHead {
+    Uint16               major_version; /**< @b Always set to 1 */
+    Uint16               minor_version; /**< @b Always set to 0 */
+    Uint32               font_revision; /**< @b Set by font manufacturer. */
+    Uint32               checksum_adjustment;
+    Uint32               magic_number;  /**< @b Always set to @c OTF_MAGIC_NUMBER */
+    OtfHeadFlags         flags;
+    Uint16               units_per_em;  /**< @b Some info for rasterizer */
+    Uint64               created;       /**< @b Number of seconds since Jan 1st 1904 Midnight */
+    Uint64               modified;      /**< @b Number of seconds since Jan 1st 1904 Midnight */
+    Int16                x_min; /**< Minimum x coordinate across all glyph bounding boxes. */
+    Int16                y_min; /**< Minimum y coordinate across all glyph bounding boxes. */
+    Int16                x_max; /**< Maximum x coordinate across all glyph bounding boxes. */
+    Int16                y_max; /**< Maximum y coordinate across all glyph bounding boxes. */
+    OtfMacStyleFlags     mac_style;
+    Uint16               lowest_rec_ppem;     /**< @b Smallest readable size in pixels */
+    OtfFontDirectionHint font_direction_hint; /**< @b Deprecated (always set to 2). */
     Int16 index_to_loc_format; /**< @b 0 for short offsets, 1 for long offsets in "loca" */
     Int16 glyph_data_format;   /**< @b 0 for current format. */
-} XfOtfHead;
+} OtfHead;
 
-#define XF_OTF_HEAD_DATA_SIZE                                                                    \
-    (sizeof (Uint16) * 2 + sizeof (Uint32) * 3 + sizeof (XfOtfHeadFlags) + sizeof (Uint16) +       \
-     sizeof (Uint64) * 2 + sizeof (Int16) * 4 + sizeof (XfOtfMacStyleFlags) + sizeof (Uint16) +    \
-     sizeof (XfOtfFontDirectionHint) + sizeof (Int16) * 2)
+#define OTF_HEAD_DATA_SIZE                                                                         \
+    (sizeof (Uint16) * 2 + sizeof (Uint32) * 3 + sizeof (OtfHeadFlags) + sizeof (Uint16) +         \
+     sizeof (Uint64) * 2 + sizeof (Int16) * 4 + sizeof (OtfMacStyleFlags) + sizeof (Uint16) +      \
+     sizeof (OtfFontDirectionHint) + sizeof (Int16) * 2)
 
-XfOtfHead* xf_otf_head_init (XfOtfHead* head, Uint8* data, Size size);
-XfOtfHead* xf_otf_head_pprint (XfOtfHead* head, Uint8 indent_level);
+OtfHead* otf_head_init (OtfHead* head, Uint8* data, Size size);
+OtfHead* otf_head_pprint (OtfHead* head, Uint8 indent_level);
 
 #endif // ANVIE_CROSSFILE_OTF_TABLES_HEAD_H

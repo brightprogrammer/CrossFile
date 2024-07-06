@@ -37,25 +37,23 @@
 #include <Anvie/Types.h>
 
 /* crossfile */
-#include <Anvie/CrossFile/File.h>
 #include <Anvie/CrossFile/Otf/Tables.h>
 
-typedef struct XfOtfFile {
-    XfFile        file;
-    XfOtfTableDir table_directory;
+typedef struct OtfFile {
+    OtfTableDir table_directory;
 
     /* data from table records */
-    XfOtfCmap cmap;
-    XfOtfHead head;
-    XfOtfHhea hhea;
-    XfOtfHmtx hmtx;
-    XfOtfName name; 
-    XfOtfMaxp maxp;
-    XfOtfLoca loca;
-} XfOtfFile;
+    OtfCmap cmap;
+    OtfHead head;
+    OtfHhea hhea;
+    OtfHmtx hmtx;
+    OtfName name;
+    OtfMaxp maxp;
+    OtfLoca loca;
+} OtfFile;
 
-XfOtfFile* xf_otf_file_open (XfOtfFile* otf_file, CString filename);
-XfOtfFile* xf_otf_file_close (XfOtfFile* otf_file);
-XfOtfFile* xf_otf_file_pprint (XfOtfFile* otf_file, Uint8 identation_level);
+OtfFile* otf_file_open (OtfFile* otf_file, CString filename);
+OtfFile* otf_file_close (OtfFile* otf_file);
+OtfFile* otf_file_pprint (OtfFile* otf_file, Uint8 identation_level);
 
 #endif // ANVIE_CROSSFILE_OTF_OTF_H
