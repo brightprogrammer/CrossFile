@@ -3,13 +3,13 @@ enum ElfVersion : Uint8 {
 }
 
 enum ElfClass : Uint8 {
-    ELFCLASS32 = 1            /* 32-bit objects */ 
-    ELFCLASS64 = 2            /* 64-bit objects */ 
+    ELFCLASS32 = 1            /* 32-bit objects */
+    ELFCLASS64 = 2            /* 64-bit objects */
 }
 
 enum ElfDataEnc : Uint8 {
-    ELFDATA2LSB = 1           /* 2's complement, little endian */ 
-    ELFDATA2MSB = 2           /* 2's complement, big endian */    
+    ELFDATA2LSB = 1           /* 2's complement, little endian */
+    ELFDATA2MSB = 2           /* 2's complement, big endian */
 }
 
 enum ElfOsAbi : Uint8 {
@@ -31,60 +31,60 @@ enum ElfOsAbi : Uint8 {
 }
 
 struct ElfIdent {
-    hidden Uint8      magic[4]
-           ElfClass   class
-           ElfDataEnc data_enc    
-    hidden ElfVersion version
-           ElfOsAbi   os_abi
-           Uint8      abi_version
-    hidden Uint8      pad[7]
+    Uint8      magic[4]
+    ElfClass   class
+    ElfDataEnc data_enc
+    ElfVersion version
+    ElfOsAbi   os_abi
+    Uint8      abi_version
+    Uint8      pad[7]
 
-    @assert {
-        ei_magic == [0x7f, 'E', 'L', 'F']
+    #assert {
+        magic == [0x7f 0x46 0x4c 0x47]
     }
 }
 
 enum ElfType : Uint16 {
-    ET_NONE   = 0                /* No file type */
-    ET_REL    = 1                /* Relocatable file */
-    ET_EXEC   = 2                /* Executable file */
-    ET_DYN    = 3                /* Shared object file */
-    ET_CORE   = 4                /* Core file */
-    ET_NUM    = 5                /* Number of defined types */
-    0xfe00 <= ET_OS   <= 0xfeff  /* OS-specific range */
-    0xff00 <= ET_PROC <= 0xffff  /* Processor-specific range */
+    ET_NONE   = 0                 /* No file type */
+    ET_REL    = 1                 /* Relocatable file */
+    ET_EXEC   = 2                 /* Executable file */
+    ET_DYN    = 3                 /* Shared object file */
+    ET_CORE   = 4                 /* Core file */
+    ET_NUM    = 5                 /* Number of defined types */
+    ET_OS     = 0xfe00 .. 0xfeff  /* OS-specific range */
+    ET_PROC   = 0xff00 .. 0xffff  /* Processor-specific range */
 }
 
 struct ElfHeader32 {
-           Uint16 type             /* Object file type */
-           Uint16 machine          /* Architecture */
-    hidden Uint32 version          /* Object file version */
-           Uint32 entry            /* Entry point virtual address */
-           Uint32 phoff            /* Program header table file offset */
-           Uint32 shoff            /* SectionHeader header table file offset */
-           Uint32 flags            /* Processor-specific flags */
-    hidden Uint16 ehsize           /* ELF header size in bytes */
-    hidden Uint16 phentsize        /* Program header table entry size */
-           Uint16 phnum            /* Program header table entry count */
-    hidden Uint16 shentsize        /* Section header table entry size */
-           Uint16 shnum            /* Section header table entry count */
-           Uint16 shstrndx         /* Section header string table index */
+    Uint16 type             /* Object file type */
+    Uint16 machine          /* Architecture */
+    Uint32 version          /* Object file version */
+    Uint32 entry            /* Entry point virtual address */
+    Uint32 phoff            /* Program header table file offset */
+    Uint32 shoff            /* SectionHeader header table file offset */
+    Uint32 flags            /* Processor-specific flags */
+    Uint16 ehsize           /* ELF header size in bytes */
+    Uint16 phentsize        /* Program header table entry size */
+    Uint16 phnum            /* Program header table entry count */
+    Uint16 shentsize        /* Section header table entry size */
+    Uint16 shnum            /* Section header table entry count */
+    Uint16 shstrndx         /* Section header string table index */
 }
 
 struct ElfHeader64 {
-           Uint16 type             /* Object file type */
-           Uint16 machine          /* Architecture */
-    hidden Uint32 version          /* Object file version */
-           Uint64 entry            /* Entry point virtual address */
-           Uint64 phoff            /* Program header table file offset */
-           Uint64 shoff            /* Section header table file offset */
-           Uint32 flags            /* Processor-specific flags */
-    hidden Uint16 ehsize           /* ELF header size in bytes */
-    hidden Uint16 phentsize        /* Program header table entry size */
-           Uint16 phnum            /* Program header table entry count */
-    hidden Uint16 shentsize        /* Section header table entry size */
-           Uint16 shnum            /* Section header table entry count */
-           Uint16 shstrndx         /* Section header string table index */
+    Uint16 type             /* Object file type */
+    Uint16 machine          /* Architecture */
+    Uint32 version          /* Object file version */
+    Uint64 entry            /* Entry point virtual address */
+    Uint64 phoff            /* Program header table file offset */
+    Uint64 shoff            /* Section header table file offset */
+    Uint32 flags            /* Processor-specific flags */
+    Uint16 ehsize           /* ELF header size in bytes */
+    Uint16 phentsize        /* Program header table entry size */
+    Uint16 phnum            /* Program header table entry count */
+    Uint16 shentsize        /* Section header table entry size */
+    Uint16 shnum            /* Section header table entry count */
+    Uint16 shstrndx         /* Section header string table index */
 }
 
 struct ElfSectionHeader32 {
@@ -99,7 +99,7 @@ struct ElfSectionHeader32 {
     Uint32 addralign /* Alignment */
     Uint32 entsize   /* Entry size if section holds table */
 
-    @implicit {
+    #implicit {
         Uint8* data($ + offset) /* Data contained by this section */
     }
 }
@@ -116,7 +116,7 @@ struct ElfSectionHeader64 {
     Uint64 addralign /* Alignment */
     Uint64 entsize   /* Entry size if section holds table */
 
-    @implicit {
+    #implicit {
         Uint8* data($ + offset) /* Data contained by this section */
     }
 }
@@ -131,7 +131,7 @@ struct ElfProgramHeader32 {
     Uint32 flags  /* Flags */
     Uint32 align  /* Alignment */
 
-    @implicit {
+    #implicit {
         Uint8* data($ + offset) /* Data contained by this segment */
     }
 }
@@ -145,8 +145,8 @@ struct ElfProgramHeader64 {
     Uint64 filesz /* Size in file */
     Uint64 memsz  /* Size in memory */
     Uint64 align  /* Alignment */
-    
-    @implicit {
+
+    #implicit {
         Uint8* data($ + offset) /* Data contained by this segment */
     }
 }
@@ -170,9 +170,9 @@ typedef ElfProgramHeader<ElfClass> {
 }
 
 file Elf {
-    ElfIdent ident(+0)
+    ElfIdent               ident
+    ElfHeader<ident.class> header
 
-    ElfHeader<ident.class>        header(+sizeof(ident))
     ElfSectionHeader<ident.class> sections[header.shnum](+header.shoff)
     ElfProgramHeader<ident.class> segments[header.phnum](+header.phoff)
 }
