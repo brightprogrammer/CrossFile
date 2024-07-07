@@ -1,0 +1,36 @@
+=============================
+enum_decl
+=============================
+
+/* some doc */
+enum XfileType : Uint32 {
+     XFILE_TYPE_1 = 1 /* first dummy type*/
+     XFILE_TYPE_2 = 2
+     XFILE_TYPE_3to5 = 3 .. 5
+     XFILE_TYPE_10to100 = 10 .. 100 /* with doc*/
+}
+
+-----------------------------
+
+(source_file
+    (enum_decl
+        (name: (id))
+        (type: (type (basic_type)))
+        (enum_member
+            (name: (id))
+            (value: (num))
+            (doc: (comment)))
+        (enum_member
+            (name: (id))
+            (value: (num)))
+        (enum_member
+            (name: (id))
+            (value: (range (
+                    (range_begin: (num))
+                    (range_end: (num))))))
+        (enum_member
+            (name: (id))
+            (value: (range (
+                    (range_begin: (num))
+                    (range_end: (num)))))
+            (doc: (comment)))))

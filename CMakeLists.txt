@@ -12,7 +12,14 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -fsanitize=address")
 
 # This is where I keep all my CMake helper scripts
 set(CROSSFILE_CMAKE_SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
-include(${CROSSFILE_CMAKE_SCRIPTS_DIR}/TreeSitterXfileGenerate.cmake)
+list(APPEND CMAKE_MODULE_PATH "${CROSSFILE_CMAKE_SCRIPTS_DIR}")
+
+include(TreeSitterXfileGenerate)
 
 include_directories(Include)
 add_subdirectory(Source)
+
+add_custom_target(all_tests
+    DEPENDS ${TREE_SITTER_XFILE_TEST_DEPENDENCIES}
+)
+
