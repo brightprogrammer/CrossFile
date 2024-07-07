@@ -10,6 +10,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -fsanitize=address")
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror")
 
-include_directories(Include)
+# This is where I keep all my CMake helper scripts
+set(CROSSFILE_CMAKE_SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
+include(${CROSSFILE_CMAKE_SCRIPTS_DIR}/TreeSitterXfileGenerate.cmake)
 
+include_directories(Include)
 add_subdirectory(Source)
