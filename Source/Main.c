@@ -2,6 +2,9 @@
 #include <Anvie/CrossFile/Stream.h>
 #include <Anvie/Types.h>
 
+#include <tree-sitter-xfile.h>
+#include <tree_sitter/api.h>
+
 int main (int argc, char** argv) {
     RETURN_VALUE_IF (argc != 2 || !argv[1], EXIT_FAILURE, "USAGE: %s <file.xf>", argv[0]);
 
