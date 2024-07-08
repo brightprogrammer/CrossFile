@@ -50,9 +50,9 @@ module.exports = grammar({
             'struct',
             field('name', $.id),
             '{',
+            field('alias', optional($.alias)),
             field('body', repeat($.struct_member)),
             field('assert', optional($.assert)),
-            field('implicit', optional($.implicit)),
             '}'
         ),
 
@@ -73,7 +73,9 @@ module.exports = grammar({
             'file',
             $.id,
             '{',
+            field('alias', optional($.alias)),
             field('body', repeat($.struct_member)),
+            field('assert', optional($.assert)),
             '}'
         ),
 
@@ -89,7 +91,7 @@ module.exports = grammar({
         ),
 
         typeargs: $ => seq(
-            '<', $.id, repeat(seq(',', $.id)), '>',
+            '<', $.expr, repeat(seq(',', $.expr)), '>',
         ),
 
         basic_type: _ => choice(
@@ -126,55 +128,50 @@ module.exports = grammar({
             '}'
         ),
 
-        implicit: $ => seq(
-            '#implicit', '{',
-            repeat($.struct_member),
+        alias: $ => seq(
+            '#alias', '{',
+            repeat(seq($.id, ':', $.expr)),
             '}'
         ),
 
-        expr: $ => choice(
+        expr: $ => $._expr,
+        _expr: $ => choice(
             $.num,
             $.arr,
             $.id,
             $.arith_expr,
             $.bitwise_expr,
             $.bool_expr,
-            $.parenthesized_expr
+            seq('(', $._expr, ')')
         ),
 
         arith_expr: $ => choice(
-            prec.left(1, seq($.expr, '+', $.expr)),
-            prec.left(1, seq($.expr, '-', $.expr)),
-            prec.left(2, seq($.expr, '*', $.expr)),
-            prec.left(2, seq($.expr, '/', $.expr)),
-            prec.left(2, seq($.expr, '%', $.expr))
+            prec.left(1, seq($._expr, '+', $._expr)),
+            prec.left(1, seq($._expr, '-', $._expr)),
+            prec.left(2, seq($._expr, '*', $._expr)),
+            prec.left(2, seq($._expr, '/', $._expr)),
+            prec.left(2, seq($._expr, '%', $._expr))
         ),
 
         bitwise_expr: $ => choice(
-            prec.left(3, seq($.expr, '&', $.expr)),
-            prec.left(3, seq($.expr, '|', $.expr)),
-            prec.left(3, seq($.expr, '^', $.expr)),
-            prec.left(3, seq($.expr, '<<', $.expr)),
-            prec.left(3, seq($.expr, '>>', $.expr)),
-            prec.right(3, seq('~', $.expr))
+            prec.left(3, seq($._expr, '&', $._expr)),
+            prec.left(3, seq($._expr, '|', $._expr)),
+            prec.left(3, seq($._expr, '^', $._expr)),
+            prec.left(3, seq($._expr, '<<', $._expr)),
+            prec.left(3, seq($._expr, '>>', $._expr)),
+            prec.right(3, seq('~', $._expr))
         ),
 
         bool_expr: $ => choice(
-            prec.left(4, seq($.expr, '&&', $.expr)),
-            prec.left(4, seq($.expr, '||', $.expr)),
-            prec.left(5, seq($.expr, '==', $.expr)),
-            prec.left(5, seq($.expr, '!=', $.expr)),
-            prec.left(6, seq($.expr, '<', $.expr)),
-            prec.left(6, seq($.expr, '>', $.expr)),
-            prec.left(6, seq($.expr, '<=', $.expr)),
-            prec.left(6, seq($.expr, '>=', $.expr)),
-            prec.right(6, seq('!', $.expr))
-        ),
-
-        parenthesized_expr: $ => seq(
-            '(',
-            $.expr,
-            ')'
+            prec.left(4, seq($._expr, '&&', $._expr)),
+            prec.left(4, seq($._expr, '||', $._expr)),
+            prec.left(5, seq($._expr, '==', $._expr)),
+            prec.left(5, seq($._expr, '!=', $._expr)),
+            prec.left(6, seq($._expr, '<', $._expr)),
+            prec.left(6, seq($._expr, '>', $._expr)),
+            prec.left(6, seq($._expr, '<=', $._expr)),
+            prec.left(6, seq($._expr, '>=', $._expr)),
+            prec.right(6, seq('!', $._expr))
         ),
 
         arr: $ => choice(

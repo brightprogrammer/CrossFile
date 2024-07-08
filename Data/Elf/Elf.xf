@@ -98,10 +98,6 @@ struct ElfSectionHeader32 {
     Uint32 info      /* Additional section information */
     Uint32 addralign /* Alignment */
     Uint32 entsize   /* Entry size if section holds table */
-
-    #implicit {
-        Uint8* data($ + offset) /* Data contained by this section */
-    }
 }
 
 struct ElfSectionHeader64 {
@@ -115,10 +111,6 @@ struct ElfSectionHeader64 {
     Uint32 info      /* Additional section information */
     Uint64 addralign /* Alignment */
     Uint64 entsize   /* Entry size if section holds table */
-
-    #implicit {
-        Uint8* data($ + offset) /* Data contained by this section */
-    }
 }
 
 struct ElfProgramHeader32 {
@@ -130,10 +122,6 @@ struct ElfProgramHeader32 {
     Uint32 memsz  /* Size in memory */
     Uint32 flags  /* Flags */
     Uint32 align  /* Alignment */
-
-    #implicit {
-        Uint8* data($ + offset) /* Data contained by this segment */
-    }
 }
 
 struct ElfProgramHeader64 {
@@ -145,10 +133,6 @@ struct ElfProgramHeader64 {
     Uint64 filesz /* Size in file */
     Uint64 memsz  /* Size in memory */
     Uint64 align  /* Alignment */
-
-    #implicit {
-        Uint8* data($ + offset) /* Data contained by this segment */
-    }
 }
 
 /* dependent type for ElfHeader */

@@ -1,0 +1,51 @@
+=============================
+struct_decl
+=============================
+
+/* doc doc */
+struct XfileData {
+       Uint16        word     /* base type member */
+       DepType<word, word / 2> dep_word /* a type dependent on Uint16 word */
+       GenStruct     genstr ($ + (addr % 10) - word)
+       Uint32        arr[255]
+       Uint64        arr2[1337/word](+word) /* read array at word offset from start of struct */
+
+       #assert {
+           word > 0 && word < 10
+           (word % 2) == 0
+       }
+}
+
+-----------------------------
+(source_file
+    (struct_decl
+        doc: (comment)
+        name: (id)
+        body: (struct_member
+                  type: (type (basic_type))
+                  name: (id)
+                  doc: (comment))
+        body: (struct_member
+                  type: (type (custom_type
+                                  name: (id)
+                                  typeargs: (typeargs (id) (expr (arith_expr (id) (num)))))
+                  name: (id)
+                  doc: (comment))
+        body: (struct_member
+                 type: (type (custom_type (id)))
+                 name: (id)
+                 addr: (expr (arith_expr (expr (arith_expr (expr (id)) (expr (num)))) (expr (id)))))
+        body: (struct_member
+                  type: (type (basic_type))
+                  name: (id)
+                  array_size: (expr (num)))
+        body: (struct_member
+                  type: (type (basic_type))
+                  name: (id)
+                  array_size: (expr (arith_expr (expr (num)) (expr (id))))
+                  addr: (expr (id))
+                  doc: (comment))
+       assert: (assert
+                   (bool_expr (expr (bool_expr (expr (id)) (expr (num))))
+                              (expr (bool_expr (expr (id)) (expr (num)))))
+                   (bool_expr (expr (parenthesized_expr (expr (arith_expr (expr (id)) (expr (num)))))) (expr(num))))))

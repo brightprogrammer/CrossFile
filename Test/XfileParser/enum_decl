@@ -17,17 +17,21 @@ enum XfileType : Uint32 {
         doc: (comment)
         name: (id)
         type: (type (basic_type))
-        (enum_member
-            name: (id)
-            value: (num)
-            doc: (comment))
-        (enum_member
-            name: (id)
-            value: (num))
-        (enum_member
-            name: (id)
-            value: (range (range_begin: (num) range_end: (num))))
-        (enum_member
-            name: (id)
-            value: (range (range_begin: (num) range_end: (num)))
-            doc: (comment))))
+        body: (enum_member
+                  name: (id)
+                  value: (num)
+                  doc: (comment))
+        body: (enum_member
+                  name: (id)
+                  value: (num))
+        body: (enum_member
+                  name: (id)
+                  value: (range
+                             range_begin: (num)
+                             range_end: (num)))
+        body: (enum_member
+                  name: (id)
+                  value: (range
+                             range_begin: (num)
+                             range_end: (num))
+                  doc: (comment))))
