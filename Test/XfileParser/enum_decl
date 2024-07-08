@@ -14,23 +14,20 @@ enum XfileType : Uint32 {
 
 (source_file
     (enum_decl
-        (name: (id))
-        (type: (type (basic_type)))
+        doc: (comment)
+        name: (id)
+        type: (type (basic_type))
         (enum_member
-            (name: (id))
-            (value: (num))
-            (doc: (comment)))
+            name: (id)
+            value: (num)
+            doc: (comment))
         (enum_member
-            (name: (id))
-            (value: (num)))
+            name: (id)
+            value: (num))
         (enum_member
-            (name: (id))
-            (value: (range (
-                    (range_begin: (num))
-                    (range_end: (num))))))
+            name: (id)
+            value: (range (range_begin: (num) range_end: (num))))
         (enum_member
-            (name: (id))
-            (value: (range (
-                    (range_begin: (num))
-                    (range_end: (num)))))
-            (doc: (comment)))))
+            name: (id)
+            value: (range (range_begin: (num) range_end: (num)))
+            doc: (comment))))

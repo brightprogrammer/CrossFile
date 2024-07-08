@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.5)
 
 project(CrossFile VERSION 0 LANGUAGES C)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Lib)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -fsanitize=address")
@@ -19,7 +19,5 @@ include(TreeSitterXfileGenerate)
 include_directories(Include)
 add_subdirectory(Source)
 
-add_custom_target(all_tests
-    DEPENDS ${TREE_SITTER_XFILE_TEST_DEPENDENCIES}
-)
-
+# Will generate CTest config file and make ninja test command available
+enable_testing()

@@ -25,7 +25,6 @@ message(STATUS "Generating tree-sitter-xfile parser")
 # Define the source and build directories
 set(TREE_SITTER_XFILE_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/Generated/Xfile)
 set(TREE_SITTER_XFILE_GRAMMAR_JS ${CMAKE_CURRENT_SOURCE_DIR}/grammar.js)
-set(TREE_SITTER_XFILE_BUILD_GRAMMAR_JS ${TREE_SITTER_XFILE_BUILD_DIR}/grammar.js)
 
 set(TREE_SITTER_XFILE_INCLUDE_DIR ${TREE_SITTER_INCLUDE_DIR} ${TREE_SITTER_XFILE_BUILD_DIR}/bindings/c
     CACHE PATH "Include directory for Tree-sitter Xfile parser")
@@ -42,7 +41,7 @@ set(TREE_SITTER_XFILE_TEST_DEPENDENCIES RunTreeSitterXfileTests
 file(MAKE_DIRECTORY ${TREE_SITTER_XFILE_BUILD_DIR})
 
 # Copy grammar.js to parser build directroy (Build/Xfile)
-file(COPY ${TREE_SITTER_XFILE_GRAMMR_JS} DESTINATION ${TREE_SITTER_XFILE_BUILD_GRAMMAR_JS})
+file(COPY ${TREE_SITTER_XFILE_GRAMMAR_JS} DESTINATION ${TREE_SITTER_XFILE_BUILD_DIR})
 
 # Run tree-sitter generate command during cmake configure step
 add_custom_command(

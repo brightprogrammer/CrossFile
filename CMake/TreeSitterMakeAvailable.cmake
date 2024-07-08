@@ -36,6 +36,7 @@ ExternalProject_Add(
     GIT_SUBMODULES_RECURSE 1
     GIT_PROGRESS 1 
     LOG_DOWNLOAD 1
+    UPDATE_DISCONNECTED 1
     GIT_TAG master
     CONFIGURE_COMMAND ""
     BUILD_COMMAND make -C ${TREE_SITTER_BUILD_DIR} && cargo build --release --jobs 4 --manifest-path ${TREE_SITTER_BUILD_DIR}/Cargo.toml
